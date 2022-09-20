@@ -9,12 +9,12 @@ const PORT = process.env.PORT || 5000;
 const MONGO_URL = process.env.MONGO_URL;
 const app = express();
 
-mongoose.connection.on('open', ()=> {
-    console.log('MongoDB connected');
+mongoose.connection.on('open', () => {
+  console.log('MongoDB connected');
 });
 
-mongoose.connection.on('error', (err)=> {
-    console.log(err);
+mongoose.connection.on('error', err => {
+  console.log(err);
 });
 
 app.use(cors());
