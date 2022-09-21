@@ -1,4 +1,3 @@
-const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -20,12 +19,10 @@ mongoose.connection.on('error', err => {
 app.use(cors());
 app.use(express.json());
 
-const server = http.createServer(app);
-
 async function startServer() {
   await mongoose.connect(MONGO_URL);
 
-  server.listen(PORT, err => {
+  app.listen(PORT, err => {
     if (err) {
       console.err(err);
       return;
