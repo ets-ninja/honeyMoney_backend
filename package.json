@@ -1,14 +1,18 @@
 {
   "name": "honey-money_backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Server for elifTech school 2022 Anton's team project",
   "main": "index.js",
+  "author": "elifTech school 2022 Anton's team",
+  "license": "ISC",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js"
+    "start": "nodemon index.js",
+    "deploy": "node index.js"
   },
-  "author": "",
-  "license": "ISC",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "dependencies": {
     "@logtail/node": "^0.1.12",
     "@logtail/winston": "^0.1.13",
@@ -17,6 +21,10 @@
     "express": "^4.18.1",
     "morgan": "^1.10.0",
     "nodemon": "^2.0.19",
-    "winston": "^3.8.2"
+    "winston": "^3.8.2",
+    "mongoose": "^6.6.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.19"
   }
 }
