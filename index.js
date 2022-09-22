@@ -12,11 +12,11 @@ const MONGO_URL = process.env.MONGO_URL;
 const app = express();
 
 mongoose.connection.on("open", () => {
-  logger.info("MongoDB connected");
+    logger.info("MongoDB connected");
 });
 
 mongoose.connection.on("error", (err) => {
-  logger.error(err);
+    logger.error(err);
 });
 
 app.use(cors());
@@ -24,15 +24,15 @@ app.use(express.json());
 app.use(morganMiddleware);
 
 async function startServer() {
-  await mongoose.connect(MONGO_URL);
+    await mongoose.connect(MONGO_URL);
 
-  app.listen(PORT, (err) => {
-    if (err) {
-      logger.error(err);
-      return;
-    }
-    logger.info(`Server listens on port ${PORT}`);
-  });
+    app.listen(PORT, (err) => {
+        if (err) {
+            logger.error(err);
+            return;
+        }
+        logger.info(`Server listens on port ${PORT}`);
+    });
 }
 
 startServer();
