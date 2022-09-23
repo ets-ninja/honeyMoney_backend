@@ -19,12 +19,26 @@
     "cors": "^2.8.5",
     "dotenv": "^16.0.2",
     "express": "^4.18.1",
+    "mongoose": "^6.6.1",
     "morgan": "^1.10.0",
     "nodemon": "^2.0.19",
-    "winston": "^3.8.2",
-    "mongoose": "^6.6.1"
+    "winston": "^3.8.2"
   },
   "devDependencies": {
-    "nodemon": "^2.0.19"
-  }
+    "eslint": "^8.23.1",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
+    "nodemon": "^2.0.19",
+    "prettier": "^2.7.1"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+ "lint-staged": {
+   "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+     "prettier --write"
+   ]
+ }
 }
