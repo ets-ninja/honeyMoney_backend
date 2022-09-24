@@ -22,9 +22,27 @@
     "mongoose": "^6.6.1",
     "mongoose-unique-validator": "^3.1.0",
     "passport": "^0.6.0",
-    "passport-jwt": "^4.0.0"
+    "passport-jwt": "^4.0.0",
+    "@logtail/node": "^0.1.12",
+    "@logtail/winston": "^0.1.13",
+    "morgan": "^1.10.0",
+    "winston": "^3.8.2"
   },
   "devDependencies": {
-    "nodemon": "^2.0.19"
-  }
+    "eslint": "^8.23.1",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
+    "nodemon": "^2.0.19",
+    "prettier": "^2.7.1"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+ "lint-staged": {
+   "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+     "prettier --write"
+   ]
+ }
 }

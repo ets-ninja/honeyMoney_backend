@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const HttpError = require('./utils/http-error');
 require('dotenv').config();
 const passport = require('./middleware/passport.middleware');
+const morganMiddleware = require("./middlewares/morgan.middleware");
+const logger = require("./services/logger");
 
 // Consts
 const PORT = process.env.PORT;
@@ -18,6 +20,7 @@ const app = express();
 app.use(cors());
 app.use(passport.initialize());
 app.use(express.json());
+app.use(morganMiddleware);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 
@@ -37,26 +40,22 @@ app.use((error, req, res, next) => {
 });
 
 mongoose.connection.on('open', () => {
-  console.log('MongoDB connected');
-});
-
-mongoose.connection.on('error', err => {
-  console.log(err);
+  logger.info('MongoDB connected');
 });
 
 async function startServer() {
   try {
     await mongoose.connect(MONGO_URL);
   } catch (err) {
-    throw err;
+    logger.error(err);
   }
 
   app.listen(PORT, err => {
     if (err) {
-      console.err(err);
+      logger.error(err);
       return;
     }
-    console.log(`Server listens on port ${PORT}`);
+    logger.info(`Server listens on port ${PORT}`);
   });
 }
 
