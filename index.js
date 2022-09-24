@@ -2,20 +2,23 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const HttpError = require('./utils/http-error');
-
 require('dotenv').config();
+const passport = require('./middleware/passport.middleware');
 
 // Consts
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 const MONGO_URL = process.env.MONGO_URL;
 
 // Routes
+const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 
 const app = express();
 
 app.use(cors());
+app.use(passport.initialize());
 app.use(express.json());
+app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 
 // 404 Route should be at the end of all routes
@@ -42,7 +45,11 @@ mongoose.connection.on('error', err => {
 });
 
 async function startServer() {
-  await mongoose.connect(MONGO_URL);
+  try {
+    await mongoose.connect(MONGO_URL);
+  } catch (err) {
+    throw err;
+  }
 
   app.listen(PORT, err => {
     if (err) {

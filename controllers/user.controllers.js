@@ -1,7 +1,18 @@
 const { validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const HttpError = require('../utils/http-error');
 
+const SECRET = process.env.TOKEN_SECRET;
 const User = require('../models/user.model');
+
+async function getUserDetails(req, res) {
+  const { firstName, lastName, publicName, email, createdAt, id } = req.user;
+
+  res
+    .status(200)
+    .json({ firstName, lastName, publicName, email, createdAt, id });
+}
 
 async function createUser(req, res, next) {
   const errors = validationResult(req);
@@ -31,12 +42,23 @@ async function createUser(req, res, next) {
     return next(error);
   }
 
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12);
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create a user. Please try again later.',
+      500
+    );
+    return next(error);
+  }
+
   const createdUser = new User({
     firstName,
     lastName,
     publicName,
     email,
-    password,
+    password: hashedPassword,
   });
 
   try {
@@ -46,65 +68,67 @@ async function createUser(req, res, next) {
     return next(error);
   }
 
+  let token;
+  try {
+    token = jwt.sign({ sub: createdUser.id }, SECRET, { expiresIn: '1h' });
+  } catch (err) {
+    const error = new HttpError('Signing up failed, please try again.', 500);
+    return next(error);
+  }
+
   res.status(201).json({
-    user: createdUser.toObject({
-      getters: true,
-      versionKey: false,
-    }),
+    userId: createdUser.id,
+    token: 'Bearer ' + token,
   });
 }
 
-async function loginUser(req, res, next) {
-  const { email, password } = req.body;
+async function updateUser(req, res, next) {
+  const errors = validationResult(req);
 
-  let existingUser;
+  if (!errors.isEmpty()) {
+    return next(new HttpError('Invalid inputs passed.', 422));
+  }
 
+  const { firstName, lastName, publicName, email, password } = req.body;
+
+  let hashedPassword;
   try {
-    existingUser = await User.findOne({ email: email });
+    hashedPassword = await bcrypt.hash(password, 12);
   } catch (err) {
     const error = new HttpError(
-      'Logging in failed, please try again later.',
+      'Could not create a user. Please try again later.',
       500
     );
     return next(error);
   }
 
-  if (!existingUser || existingUser.password !== password) {
+  const updatedUser = {
+    firstName,
+    lastName,
+    ...(publicName && { publicName }),
+    email,
+    password: hashedPassword,
+  };
+
+  let existingUser;
+  try {
+    existingUser = await User.findOneAndUpdate(
+      { _id: req.user.id },
+      updatedUser,
+      { new: true }
+    );
+  } catch (err) {
     const error = new HttpError(
-      'Invalid credentials, could not log you in.',
-      401
+      'Updating failed, please try again later.',
+      500
     );
     return next(error);
   }
 
-  res.status(200).json({ message: 'Logged in!' });
+  res.status(200).json({
+    userId: existingUser.id,
+    message: 'User data updated',
+  });
 }
 
-async function validateEmail(req, res, next) {
-  const errors = validationResult(req);
-
-  if (!errors.isEmpty()) {
-    console.log(errors);
-    return next(new HttpError('Invalid email passed.', 422));
-  }
-  const email = req.query.email.toLowerCase();
-  console.log(req.query);
-
-  let existingUser;
-
-  try {
-    existingUser = await User.findOne({ email: email });
-  } catch (err) {
-    const error = new HttpError('Search failed, please try again later.', 500);
-    return next(error);
-  }
-
-  if (existingUser) {
-    const error = new HttpError('Email address already exists.', 422);
-    return next(error);
-  }
-
-  res.status(204).send();
-}
-
-module.exports = { createUser, loginUser, validateEmail };
+module.exports = { createUser, updateUser, getUserDetails };

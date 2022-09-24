@@ -19,6 +19,7 @@ userSchema.plugin(uniqueValidator);
 if (!userSchema.options.toObject) userSchema.options.toObject = {};
 userSchema.options.toObject.transform = function (doc, ret, options) {
   delete ret._id;
+  delete ret.__v;
   delete ret.password;
   return ret;
 };

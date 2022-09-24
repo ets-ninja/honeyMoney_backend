@@ -1,14 +1,15 @@
 const express = require('express');
-const { check, query } = require('express-validator');
+const { check } = require('express-validator');
+const passport = require('passport');
 
 const userController = require('../controllers/user.controllers');
 
 const router = express.Router();
 
 router.get(
-  '/validate_email',
-  [query('email').normalizeEmail({ gmail_remove_dots: false }).isEmail()],
-  userController.validateEmail
+  '/',
+  passport.authenticate('jwt', { session: false }),
+  userController.getUserDetails
 );
 
 router.post(
@@ -23,13 +24,17 @@ router.post(
   userController.createUser
 );
 
-router.post(
-  '/login',
+router.patch(
+  '/update',
   [
-    check('email').normalizeEmail().isEmail(),
+    passport.authenticate('jwt', { session: false }),
+    check('firstName').not().isEmpty(),
+    check('lastName').not().isEmpty(),
+    check('lastName').not().isEmpty(),
+    check('email').normalizeEmail({ gmail_remove_dots: false }).isEmail(),
     check('password').isLength({ min: 6 }),
   ],
-  userController.loginUser
+  userController.updateUser
 );
 
 module.exports = router;
