@@ -12,11 +12,12 @@ const userSchema = new Schema(
     password: { type: String, required: true },
     //   stripeUserId: { type: String, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 userSchema.plugin(uniqueValidator);
 if (!userSchema.options.toObject) userSchema.options.toObject = {};
+// eslint-disable-next-line no-unused-vars
 userSchema.options.toObject.transform = function (doc, ret, options) {
   delete ret._id;
   delete ret.__v;

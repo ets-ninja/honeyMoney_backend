@@ -8,7 +8,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js",
-    "deploy": "node index.js"
+    "deploy": "node index.js",
+    "prettier": "prettier --write --config .prettierrc.json \"**/*.js\"",
+    "lint": "eslint --fix --config .eslintrc.json \"**/*.js\""
   },
   "engines": {
     "node": ">=16.0.0"
@@ -40,9 +42,9 @@
       "pre-commit": "lint-staged"
     }
   },
- "lint-staged": {
-   "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
-     "prettier --write"
-   ]
- }
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write"
+    ]
+  }
 }

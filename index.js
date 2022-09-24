@@ -1,11 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const HttpError = require('./utils/http-error');
-require('dotenv').config();
-const passport = require('./middleware/passport.middleware');
-const morganMiddleware = require("./middlewares/morgan.middleware");
-const logger = require("./services/logger");
+const passport = require('./middlewares/passport.middleware');
+const morganMiddleware = require('./middlewares/morgan.middleware');
+const logger = require('./services/logger');
 
 // Consts
 const PORT = process.env.PORT;
@@ -35,6 +35,7 @@ app.use((error, req, res, next) => {
   if (res.headerSent) {
     return next(error);
   }
+  logger.http(error);
   res.status(error.code || 500);
   res.json({ message: error.message || 'Unknown server error' });
 });

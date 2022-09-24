@@ -16,7 +16,7 @@ async function loginUser(req, res, next) {
   } catch (err) {
     const error = new HttpError(
       'Logging in failed, please try again later.',
-      500
+      500,
     );
     return next(error);
   }
@@ -24,7 +24,7 @@ async function loginUser(req, res, next) {
   if (!existingUser) {
     const error = new HttpError(
       'Invalid credentials, could not log you in.',
-      401
+      401,
     );
     return next(error);
   }
@@ -35,7 +35,7 @@ async function loginUser(req, res, next) {
   } catch (err) {
     const error = new HttpError(
       'Logging in failed, please try again later.',
-      500
+      500,
     );
     return next(error);
   }

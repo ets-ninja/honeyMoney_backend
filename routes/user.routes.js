@@ -9,7 +9,7 @@ const router = express.Router();
 router.get(
   '/',
   passport.authenticate('jwt', { session: false }),
-  userController.getUserDetails
+  userController.getUserDetails,
 );
 
 router.post(
@@ -21,7 +21,7 @@ router.post(
     check('email').normalizeEmail({ gmail_remove_dots: false }).isEmail(),
     check('password').isLength({ min: 6 }),
   ],
-  userController.createUser
+  userController.createUser,
 );
 
 router.patch(
@@ -34,7 +34,7 @@ router.patch(
     check('email').normalizeEmail({ gmail_remove_dots: false }).isEmail(),
     check('password').isLength({ min: 6 }),
   ],
-  userController.updateUser
+  userController.updateUser,
 );
 
 module.exports = router;

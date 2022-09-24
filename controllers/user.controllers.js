@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const HttpError = require('../utils/http-error');
 
+// eslint-disable-next-line no-undef
 const SECRET = process.env.TOKEN_SECRET;
 const User = require('../models/user.model');
 
@@ -29,7 +30,7 @@ async function createUser(req, res, next) {
   } catch (err) {
     const error = new HttpError(
       'Signing up failed, please try again later.',
-      500
+      500,
     );
     return next(error);
   }
@@ -37,7 +38,7 @@ async function createUser(req, res, next) {
   if (existingUser) {
     const error = new HttpError(
       'User exists already, please login instead.',
-      422
+      422,
     );
     return next(error);
   }
@@ -48,7 +49,7 @@ async function createUser(req, res, next) {
   } catch (err) {
     const error = new HttpError(
       'Could not create a user. Please try again later.',
-      500
+      500,
     );
     return next(error);
   }
@@ -97,7 +98,7 @@ async function updateUser(req, res, next) {
   } catch (err) {
     const error = new HttpError(
       'Could not create a user. Please try again later.',
-      500
+      500,
     );
     return next(error);
   }
@@ -115,12 +116,12 @@ async function updateUser(req, res, next) {
     existingUser = await User.findOneAndUpdate(
       { _id: req.user.id },
       updatedUser,
-      { new: true }
+      { new: true },
     );
   } catch (err) {
     const error = new HttpError(
       'Updating failed, please try again later.',
-      500
+      500,
     );
     return next(error);
   }

@@ -6,6 +6,19 @@
 
 ```
 npm start
+
+```
+### Lint
+
+```
+npm run lint
+
+```
+### Format
+
+```
+npm run prettier
+
 ```
 # Endpoints
 | Endpoint  | Method  | Headers | Params |

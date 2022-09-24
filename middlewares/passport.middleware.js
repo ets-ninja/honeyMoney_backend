@@ -21,7 +21,7 @@ passport.use(
         return done(new HttpError('User does not exist', 401), false);
       }
     });
-  })
+  }),
 );
 
 module.exports = passport;

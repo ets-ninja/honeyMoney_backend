@@ -1,21 +1,22 @@
-const { createLogger, format, transports } = require("winston");
+const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, printf, colorize, errors } = format;
 
 function createDevLogger() {
   const devFormat = printf(
+    // eslint-disable-next-line no-unused-vars
     ({ level, message, timestamp, stack, ...metadata }) => {
       const msg = `${timestamp} [${level}]: ${stack || message}`;
       return msg;
-    }
+    },
   );
 
   return createLogger({
-    level: "debug",
+    level: 'debug',
     format: combine(
       colorize(),
-      timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+      timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       errors({ stack: true }),
-      devFormat
+      devFormat,
     ),
     transports: [
       new transports.Console({
