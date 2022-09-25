@@ -14,6 +14,7 @@ const MONGO_URL = process.env.MONGO_URL;
 // Routes
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
+const docsRoute = require('./routes/api-docs.routes');
 
 const app = express();
 
@@ -23,7 +24,7 @@ app.use(express.json());
 app.use(morganMiddleware);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
-
+app.use('/api/api-docs', docsRoute);
 // 404 Route should be at the end of all routes
 app.use((req, res, next) => {
   const error = new HttpError('Route does not exist', 404);
