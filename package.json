@@ -16,18 +16,21 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
+    "@logtail/node": "^0.1.12",
+    "@logtail/winston": "^0.1.13",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.0.2",
     "express": "^4.18.1",
     "express-validator": "^6.14.2",
+    "handlebars": "^4.7.7",
+    "mjml": "^4.13.0",
     "mongoose": "^6.6.1",
     "mongoose-unique-validator": "^3.1.0",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.7.8",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.0",
-    "@logtail/node": "^0.1.12",
-    "@logtail/winston": "^0.1.13",
-    "morgan": "^1.10.0",
     "winston": "^3.8.2"
   },
   "devDependencies": {
