@@ -17,7 +17,6 @@ router.post(
   [
     check('firstName').not().isEmpty(),
     check('lastName').not().isEmpty(),
-    check('lastName').not().isEmpty(),
     check('email').normalizeEmail({ gmail_remove_dots: false }).isEmail(),
     check('password').isLength({ min: 6 }),
   ],
@@ -29,7 +28,6 @@ router.patch(
   [
     passport.authenticate('jwt', { session: false }),
     check('firstName').not().isEmpty(),
-    check('lastName').not().isEmpty(),
     check('lastName').not().isEmpty(),
     check('email').normalizeEmail({ gmail_remove_dots: false }).isEmail(),
     check('password').isLength({ min: 6 }),
