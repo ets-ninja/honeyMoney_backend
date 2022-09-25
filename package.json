@@ -8,20 +8,26 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon index.js",
-    "deploy": "node index.js"
+    "deploy": "node index.js",
+    "prettier": "prettier --write --config .prettierrc.json \"**/*.js\"",
+    "lint": "eslint --fix --config .eslintrc.json \"**/*.js\""
   },
   "engines": {
     "node": ">=16.0.0"
   },
   "dependencies": {
-    "@logtail/node": "^0.1.12",
-    "@logtail/winston": "^0.1.13",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.0.2",
     "express": "^4.18.1",
+    "express-validator": "^6.14.2",
     "mongoose": "^6.6.1",
+    "mongoose-unique-validator": "^3.1.0",
+    "passport": "^0.6.0",
+    "passport-jwt": "^4.0.0",
+    "@logtail/node": "^0.1.12",
+    "@logtail/winston": "^0.1.13",
     "morgan": "^1.10.0",
-    "nodemon": "^2.0.19",
     "winston": "^3.8.2"
   },
   "devDependencies": {
@@ -36,9 +42,9 @@
       "pre-commit": "lint-staged"
     }
   },
- "lint-staged": {
-   "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
-     "prettier --write"
-   ]
- }
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write"
+    ]
+  }
 }

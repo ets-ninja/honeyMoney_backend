@@ -1,5 +1,5 @@
-const createDevLogger = require("./devLogger");
-const createProdLogger = require("./prodLogger");
+const createDevLogger = require('./devLogger');
+const createProdLogger = require('./prodLogger');
 
 let logger;
 
