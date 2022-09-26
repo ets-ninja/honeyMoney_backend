@@ -26,6 +26,15 @@ npm run prettier
 
 start local development server, then go to: http://localhost:5000/api/api_docs/
 
+# Short description
+| Endpoint  | Method  | Headers | Params |
+| :------------ |:---------------:|:------:|-----:|
+|/api/user    | GET |  Autorization: "Bearer TOKEN_HERE" | - |
+|/api/user/signup    | POST | - | firstName, lastName, publicName, email, password |
+|/api/user/update | PATCH | Autorization: "Bearer TOKEN_HERE" | firstName, lastName, publicName, password |
+|/api/auth/validate_email?email=%email_to_validate_here%    | GET |  -| -|
+|/api/auth/login   | POST | - | email, password |
+
 ## Logger
 
 ####Info There are 6 levels:
