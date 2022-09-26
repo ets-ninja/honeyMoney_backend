@@ -1,4 +1,4 @@
-### Email library usage:
+# Email library usage
 
 ### Create message template
 
