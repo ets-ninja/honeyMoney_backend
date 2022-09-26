@@ -2,7 +2,7 @@
 
 ### Create message template
 
-```
+```javascript
 
 const sendMessage = require('../message');
 
