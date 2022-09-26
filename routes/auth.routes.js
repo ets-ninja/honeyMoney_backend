@@ -20,4 +20,10 @@ router.post(
   authController.loginUser,
 );
 
+router.post(
+  '/restore',
+  check('email').normalizeEmail({ gmail_remove_dots: false }).isEmail(),
+  authController.requestRestorePassword,
+);
+
 module.exports = router;
