@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const HttpError = require('../utils/http-error');
+const sendRestorePasswordMessage = require('../services/email/messages/restorePassword');
 
 const SECRET = process.env.TOKEN_SECRET;
 const ERR = require('../utils/default-http-errors');
@@ -83,7 +84,7 @@ async function validateEmail(req, res, next) {
   res.status(204).send();
 }
 
-async function requestRestorePassword(req, res, next) {
+async function restorePassword(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return next(new HttpError('Invalid email passed.', 422));
@@ -109,7 +110,7 @@ async function requestRestorePassword(req, res, next) {
   }
   if (token) {
     try {
-      token = await token.deleteOne();
+      await token.deleteOne();
     } catch (err) {
       return next(ERR.DB_FAILURE);
     }
@@ -126,7 +127,60 @@ async function requestRestorePassword(req, res, next) {
   } catch (err) {
     return next(ERR.DB_FAILURE);
   }
-   const link = `${process.env.APP_URL}/restore-password/`
+  const link = `${process.env.APP_URL}/restorepassword?token=${newToken}&id=${existingUser.id}`;
+  try {
+    await sendRestorePasswordMessage(existingUser.email, {
+      username: existingUser.firstName,
+      link,
+    });
+  } catch (err) {
+    return next(new HttpError('Sending email failed, please try again', 500));
+  }
+  res.status(200).json({ message: 'Email send' });
 }
 
-module.exports = { loginUser, validateEmail, requestRestorePassword };
+async function resetPassword(req, res, next) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new HttpError('Password is too short.', 422));
+  }
+
+  const { token, id } = req.params;
+  const { password } = req.body;
+
+  let existingToken;
+  try {
+    existingToken = await ResetToken.findOne({ userId: id });
+  } catch (err) {
+    return next(ERR.DB_FAILURE);
+  }
+  if (!existingToken) {
+    return next(new HttpError('Token is invalid or expired', 422));
+  }
+
+  const isValid = await bcrypt.compare(token, existingToken.token);
+  if (!isValid) {
+    return next(new HttpError('Token is invalid or expired', 422));
+  }
+
+  const hash = await bcrypt.hash(password, 12);
+
+  try {
+    await User.findOneAndUpdate(
+      { _id: id },
+      { $set: { password: hash } },
+      { new: true },
+    );
+  } catch (err) {
+    return next(ERR.DB_FAILURE);
+  }
+
+  res.status(200).json({ message: 'Password updated' });
+}
+
+module.exports = {
+  loginUser,
+  validateEmail,
+  restorePassword,
+  resetPassword,
+};
