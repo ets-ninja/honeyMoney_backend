@@ -1,10 +1,13 @@
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const HttpError = require('../utils/http-error');
 
 const SECRET = process.env.TOKEN_SECRET;
+const ERR = require('../utils/default-http-errors');
 const User = require('../models/user.model');
+const ResetToken = require('../models/reset-token.model');
 
 async function loginUser(req, res, next) {
   const { email, password } = req.body;
@@ -14,11 +17,7 @@ async function loginUser(req, res, next) {
   try {
     existingUser = await User.findOne({ email: email });
   } catch (err) {
-    const error = new HttpError(
-      'Logging in failed, please try again later.',
-      500,
-    );
-    return next(error);
+    return next(ERR.DB_FAILURE);
   }
 
   if (!existingUser) {
@@ -73,8 +72,7 @@ async function validateEmail(req, res, next) {
   try {
     existingUser = await User.findOne({ email: email });
   } catch (err) {
-    const error = new HttpError('Search failed, please try again later.', 500);
-    return next(error);
+    return next(ERR.DB_FAILURE);
   }
 
   if (existingUser) {
@@ -85,4 +83,50 @@ async function validateEmail(req, res, next) {
   res.status(204).send();
 }
 
-module.exports = { loginUser, validateEmail };
+async function requestRestorePassword(req, res, next) {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new HttpError('Invalid email passed.', 422));
+  }
+
+  let existingUser;
+  try {
+    existingUser = await User.findOne({ email: req.body.email });
+  } catch (err) {
+    return next(ERR.DB_FAILURE);
+  }
+
+  if (!existingUser) {
+    const error = new HttpError('Email address does not exists.', 404);
+    return next(error);
+  }
+
+  let token;
+  try {
+    token = await ResetToken.findOne({ userId: existingUser.id });
+  } catch (err) {
+    return next(ERR.DB_FAILURE);
+  }
+  if (token) {
+    try {
+      token = await token.deleteOne();
+    } catch (err) {
+      return next(ERR.DB_FAILURE);
+    }
+  }
+
+  const newToken = crypto.randomBytes(32).toString('hex');
+  const hash = await bcrypt.hash(newToken, 12);
+
+  try {
+    await new ResetToken({
+      userId: existingUser.id,
+      token: hash,
+    }).save();
+  } catch (err) {
+    return next(ERR.DB_FAILURE);
+  }
+   const link = `${process.env.APP_URL}/restore-password/`
+}
+
+module.exports = { loginUser, validateEmail, requestRestorePassword };
