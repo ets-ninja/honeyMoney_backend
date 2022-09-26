@@ -19,7 +19,7 @@ module.exports = messageName;
 
 ### Usage message template
 
-```
+```javascript
 
 messageName("email@example.com", objectWithVariables)
 
