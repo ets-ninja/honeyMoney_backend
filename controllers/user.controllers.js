@@ -89,25 +89,12 @@ async function updateUser(req, res, next) {
     return next(new HttpError('Invalid inputs passed.', 422));
   }
 
-  const { firstName, lastName, publicName, email, password } = req.body;
-
-  let hashedPassword;
-  try {
-    hashedPassword = await bcrypt.hash(password, 12);
-  } catch (err) {
-    const error = new HttpError(
-      'Could not update a user. Please try again later.',
-      500,
-    );
-    return next(error);
-  }
+  const { firstName, lastName, publicName } = req.body;
 
   const updatedUser = {
-    firstName,
-    lastName,
+    ...(firstName && { firstName }),
+    ...(lastName && { lastName }),
     ...(publicName && { publicName }),
-    email,
-    password: hashedPassword,
   };
 
   let existingUser;
@@ -131,4 +118,38 @@ async function updateUser(req, res, next) {
   });
 }
 
-module.exports = { createUser, updateUser, getUserDetails };
+async function updatePassword(req, res, next) {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return next(new HttpError('Invalid inputs passed.', 422));
+  }
+
+  const { password, newPassword } = req.body;
+  const existingUser = req.user;
+  const isValidPassword = await bcrypt.compare(password, existingUser.password);
+
+  if (!isValidPassword) {
+    return next(new HttpError('Invalid password', 401));
+  }
+
+  const hash = await bcrypt.hash(newPassword, 12);
+  existingUser.password = hash;
+
+  try {
+    await existingUser.save();
+  } catch (err) {
+    const error = new HttpError(
+      'Updating failed, please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
+  res.status(200).json({
+    userId: existingUser.id,
+    message: 'Password updated',
+  });
+}
+
+module.exports = { createUser, updateUser, getUserDetails, updatePassword };
