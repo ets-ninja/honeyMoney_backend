@@ -90,14 +90,14 @@ async function updateUser(req, res, next) {
     return next(new HttpError('Invalid inputs passed.', 422));
   }
 
-  const { firstName, lastName, publicName, email, password } = req.body;
+  const { firstName, lastName, publicName, password } = req.body;
 
   let hashedPassword;
   try {
     hashedPassword = await bcrypt.hash(password, 12);
   } catch (err) {
     const error = new HttpError(
-      'Could not create a user. Please try again later.',
+      'Could not update a user. Please try again later.',
       500,
     );
     return next(error);
@@ -107,7 +107,6 @@ async function updateUser(req, res, next) {
     firstName,
     lastName,
     ...(publicName && { publicName }),
-    email,
     password: hashedPassword,
   };
 
