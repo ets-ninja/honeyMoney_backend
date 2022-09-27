@@ -3,12 +3,17 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const HttpError = require('../utils/http-error');
-const sendRestorePasswordMessage = require('../services/email/messages/restorePassword');
 
+// Constants
 const SECRET = process.env.TOKEN_SECRET;
-const ERR = require('../utils/default-http-errors');
+const { ERR } = require('../constants');
+
+// Models
 const User = require('../models/user.model');
 const ResetToken = require('../models/reset-token.model');
+
+// Services
+const sendRestorePasswordMessage = require('../services/email/messages/restorePassword');
 
 async function loginUser(req, res, next) {
   const { email, password } = req.body;

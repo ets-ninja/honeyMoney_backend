@@ -3,8 +3,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const HttpError = require('../utils/http-error');
 
-// eslint-disable-next-line no-undef
+// Constants
 const SECRET = process.env.TOKEN_SECRET;
+const { ERR } = require('../constants');
+
+// Models
 const User = require('../models/user.model');
 
 async function getUserDetails(req, res) {
@@ -28,11 +31,7 @@ async function createUser(req, res, next) {
   try {
     existingUser = await User.findOne({ email: email });
   } catch (err) {
-    const error = new HttpError(
-      'Signing up failed, please try again later.',
-      500,
-    );
-    return next(error);
+    return next(ERR.DB_FAILURE);
   }
 
   if (existingUser) {
@@ -97,7 +96,7 @@ async function updateUser(req, res, next) {
     hashedPassword = await bcrypt.hash(password, 12);
   } catch (err) {
     const error = new HttpError(
-      'Could not create a user. Please try again later.',
+      'Could not update a user. Please try again later.',
       500,
     );
     return next(error);
