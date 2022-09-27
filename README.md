@@ -1,4 +1,5 @@
 # Honey Money App Backend
+
 <img src="https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg" width="400"/>
 
 ### Install server dependencies.
@@ -8,16 +9,24 @@
 ```
 npm start
 ```
+
 ### Lint
+
 ```
 npm run lint
 ```
+
 ### Format
 
 ```
 npm run prettier
 ```
+
 # Endpoints
+
+start local development server, then go to: http://localhost:5000/api/api_docs/
+
+# Short description
 | Endpoint  | Method  | Headers | Params |
 | :------------ |:---------------:|:------:|-----:|
 |/api/user    | GET |  Autorization: "Bearer TOKEN_HERE" | - |
@@ -39,7 +48,10 @@ There are 6 levels:
 6.  debug
 7.  silly
 
-Logger will be consoling levels that are higher in order only. Right now config levels are `info` for production and `debug` for development. You can change them in `./service/logger/..` file if you need to widen or reduce logging levels.
+Logger will be consoling levels that are higher in order only. Right now config
+levels are `info` for production and `debug` for development. You can change
+them in `./service/logger/..` file if you need to widen or reduce logging
+levels.
 
 #### Usage
 
