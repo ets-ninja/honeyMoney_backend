@@ -152,4 +152,38 @@ async function updatePassword(req, res, next) {
   });
 }
 
-module.exports = { createUser, updateUser, getUserDetails, updatePassword };
+async function updateUserPhoto(req, res, next) {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return next(new HttpError('Invalid inputs passed.', 422));
+  }
+
+  const { userPhoto } = req.body;
+
+  const updatedUser = {
+    ...(userPhoto && { userPhoto })
+  };
+
+  let existingUser;
+  try {
+    existingUser = await User.findOneAndUpdate(
+      { _id: req.user.id },
+      updatedUser,
+      { new: true },
+    );
+  } catch (err) {
+    const error = new HttpError(
+      'Updating failed, please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
+  res.status(200).json({
+    userId: existingUser.id,
+    message: 'User photo updated',
+  });
+}
+
+module.exports = { createUser, updateUser, getUserDetails, updatePassword, updateUserPhoto };
