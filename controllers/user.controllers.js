@@ -11,11 +11,12 @@ const { ERR } = require('../constants');
 const User = require('../models/user.model');
 
 async function getUserDetails(req, res) {
-  const { firstName, lastName, publicName, email, createdAt, id } = req.user;
+  const { firstName, lastName, publicName, email, createdAt, id, userPhoto } =
+    req.user;
 
   res
     .status(200)
-    .json({ firstName, lastName, publicName, email, createdAt, id });
+    .json({ firstName, lastName, publicName, email, createdAt, id, userPhoto });
 }
 
 async function createUser(req, res, next) {
@@ -162,7 +163,7 @@ async function updateUserPhoto(req, res, next) {
   const { userPhoto } = req.body;
 
   const updatedUser = {
-    ...(userPhoto && { userPhoto })
+    ...(userPhoto && { userPhoto }),
   };
 
   let existingUser;
@@ -186,4 +187,10 @@ async function updateUserPhoto(req, res, next) {
   });
 }
 
-module.exports = { createUser, updateUser, getUserDetails, updatePassword, updateUserPhoto };
+module.exports = {
+  createUser,
+  updateUser,
+  getUserDetails,
+  updatePassword,
+  updateUserPhoto,
+};
