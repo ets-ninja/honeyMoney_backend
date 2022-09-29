@@ -10,7 +10,7 @@ async function createWishlistItem(req, res, next) {
   }
 
   const { name, description, finalGoal, image } = req.body;
-  const ownerId = req.params.id;
+  const ownerId = req.user.id;
 
   let wishlistItem;
   try {
@@ -23,7 +23,7 @@ async function createWishlistItem(req, res, next) {
     });
   } catch (err) {
     const error = new HttpError(
-      `New wishlist bank creation failed, please try again. ${err.message}`,
+      `New wishlist item creation failed, please try again. ${err.message}`,
       500,
     );
     return next(error);
@@ -31,20 +31,19 @@ async function createWishlistItem(req, res, next) {
 
   return res
     .status(201)
-    .json({ id: wishlistItem._id, message: 'New wishlist bank created' });
+    .json({ id: wishlistItem._id, message: 'New wishlist item created' });
 }
 
 async function getAllWishlistItems(req, res, next) {
-  const userId = req.params.id;
-
+  const ownerId = req.user.id;
   let wishlistItems;
   try {
     wishlistItems = await WishlistItem.find({
-      ownerId: userId,
+      ownerId,
     });
   } catch (err) {
     const error = new HttpError(
-      `Failed to get all banks, please try again. ${err.message}`,
+      `Failed to get all items, please try again. ${err.message}`,
       500,
     );
     return next(error);
@@ -56,7 +55,8 @@ async function getAllWishlistItems(req, res, next) {
 }
 
 async function updateWishlistItem(req, res, next) {
-  const { id: userId, itemId } = req.params;
+  const ownerId = req.user.id;
+  const { itemId: _id } = req.params;
   const { name, description, finalGoal, image } = req.body;
 
   const updatedItem = {
@@ -66,9 +66,10 @@ async function updateWishlistItem(req, res, next) {
     image,
   };
 
+  let updated;
   try {
-    const updated = await WishlistItem.findOneAndUpdate(
-      { _id: itemId, ownerId: userId },
+    updated = await WishlistItem.findOneAndUpdate(
+      { _id, ownerId },
       updatedItem,
       {
         new: true,
@@ -77,39 +78,40 @@ async function updateWishlistItem(req, res, next) {
 
     if (!updated) {
       return res.status(400).json({
-        message: 'Attempt to update not own or existing bank.',
+        message: 'Attempt to update not existing item.',
       });
     }
   } catch (err) {
     const error = new HttpError(
-      `Failed to update this bank, please try again. ${err.message}`,
+      `Failed to update this item, please try again. ${err.message}`,
       500,
     );
     return next(error);
   }
 
   return res.status(202).json({
-    message: 'Wishlist item updated',
+    updatedItem: updated,
   });
 }
 
 async function deleteWishlistItem(req, res, next) {
-  const { id: userId, itemId } = req.params;
+  const ownerId = req.user.id;
+  const { itemId: _id } = req.params;
 
   try {
     const deleted = await WishlistItem.deleteOne({
-      _id: itemId,
-      ownerId: userId,
+      _id,
+      ownerId,
     });
 
     if (!deleted.deletedCount) {
       return res.status(400).json({
-        message: 'Attempt to delete not existing bank.',
+        message: 'Attempt to delete not existing item.',
       });
     }
   } catch (err) {
     const error = new HttpError(
-      `Failed to delete this bank, please try again. ${err.message}`,
+      `Failed to delete this item, please try again. ${err.message}`,
       500,
     );
     return next(error);

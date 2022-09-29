@@ -213,22 +213,10 @@
         }
       }
     },
-    "/wishlist/{userId}": {
+    "/wishlist": {
       "post": {
-        "summary": "Create a new bank in the user's wishlist",
+        "summary": "Create a new item in the user's wishlist",
         "tags": ["Wishlist"],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "userId",
-            "description": "User id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "required": true
-            }
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -246,7 +234,7 @@
               "application/json": {
                 "examples": {
                   "success": {
-                    "value": "{\n \"id\": \"wishlist item id\",\n \"message\": \"New wishlist bank created\"\n}\n"
+                    "value": "{\n \"id\": \"wishlist item id\",\n \"message\": \"New wishlist item created\"\n}\n"
                   }
                 }
               }
@@ -267,20 +255,8 @@
         }
       },
       "get": {
-        "summary": "Get all banks from the user's wishlist",
+        "summary": "Get all items from the user's wishlist",
         "tags": ["Wishlist"],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "userId",
-            "description": "User id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "required": true
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "200 response. OK",
@@ -295,25 +271,15 @@
         }
       }
     },
-    "/wishlist/{userId}/update/{wishlistItemId}": {
+    "/wishlist/update/{wishlistItemId}": {
       "patch": {
-        "summary": "Update info of bank in wishlist",
+        "summary": "Update info of item in wishlist",
         "tags": ["Wishlist"],
         "parameters": [
           {
             "in": "path",
-            "name": "userId",
-            "description": "User id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "required": true
-            }
-          },
-          {
-            "in": "path",
             "name": "wishlistItemId",
-            "description": "User's wishlist bank id",
+            "description": "User's wishlist item id",
             "required": true,
             "schema": {
               "type": "string",
@@ -336,10 +302,8 @@
             "description": "202 response. Accepted",
             "content": {
               "application/json": {
-                "examples": {
-                  "success": {
-                    "value": "{\n \"message\": \"Wishlist item updated\"\n}\n"
-                  }
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseWishlistItems"
                 }
               }
             }
@@ -350,7 +314,7 @@
               "application/json": {
                 "examples": {
                   "invalid_ids": {
-                    "value": "{\n \"message\": \"Attempt to update not own or existing bank.\"\n}\n"
+                    "value": "{\n \"message\": \"Attempt to update not existing item.\"\n}\n"
                   }
                 }
               }
@@ -359,25 +323,15 @@
         }
       }
     },
-    "/wishlist/{userId}/delete/{wishlistItemId}": {
+    "/wishlist/delete/{wishlistItemId}": {
       "delete": {
-        "summary": "Delete bank from the user's wishlist",
+        "summary": "Delete item from the user's wishlist",
         "tags": ["Wishlist"],
         "parameters": [
           {
             "in": "path",
-            "name": "userId",
-            "description": "User id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "required": true
-            }
-          },
-          {
-            "in": "path",
             "name": "wishlistItemId",
-            "description": "User's wishlist bank id",
+            "description": "User's wishlist item id",
             "required": true,
             "schema": {
               "type": "string",
@@ -404,7 +358,7 @@
               "application/json": {
                 "examples": {
                   "invalid_ids": {
-                    "value": "{\n \"message\": \"Attempt to delete not existing bank.\"\n}\n"
+                    "value": "{\n \"message\": \"Attempt to delete not existing item.\"\n}\n"
                   }
                 }
               }
