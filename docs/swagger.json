@@ -94,6 +94,151 @@
         }
       }
     },
+    "/auth/restore": {
+      "post": {
+        "summary": "Request restore password email",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "succes": {
+                    "value": "{\n \"message\": \"Email send\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_email": {
+                    "value": "{\n \"message\": \"Invalid email passed\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_email": {
+                    "value": "{\n \"message\": \"Email address does not exists\"\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/restore/{token}/{id}": {
+      "post": {
+        "summary": "Create new password",
+        "tags": ["Authentication"],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "description": "Valid restore token",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "required": true
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "description": "Valid user id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "required": true
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["password"],
+                "properties": {
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "succes": {
+                    "value": "{\n \"message\": \"Password updated\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_restore_token": {
+                    "value": "{\n \"message\": \"Token is invalid or expired\"\n}\n"
+                  },
+                  "invalid_new_password": {
+                    "value": "{\n \"message\": \"Password is too short.\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_email": {
+                    "value": "{\n \"message\": \"Email address does not exists\"\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/user": {
       "get": {
         "summary": "Get user details",
@@ -166,8 +311,8 @@
     },
     "/user/update": {
       "patch": {
-        "summary": "Update user (Signup)",
-        "description": "Authorization header required",
+        "summary": "Update user",
+        "description": "Authorization header required. \n At least one parameter is required",
         "tags": ["User"],
         "security": {
           "bearerAuth": []
@@ -177,7 +322,18 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/NewUser"
+                "type": "object",
+                "properties": {
+                  "firstName": {
+                    "type": "string"
+                  },
+                  "lastName": {
+                    "type": "string"
+                  },
+                  "publicName": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
@@ -209,6 +365,52 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/user/update_password": {
+      "patch": {
+        "summary": "Update users password",
+        "description": "Authorization header required.",
+        "tags": ["User"],
+        "security": {
+          "bearerAuth": []
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["password", "newPassword"],
+                "properties": {
+                  "password": {
+                    "type": "string"
+                  },
+                  "newPassword": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "succes": {
+                    "value": "{\n \"userId\": \"user id here\",\n \"message\": \"User data updated\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid password"
           }
         }
       }
