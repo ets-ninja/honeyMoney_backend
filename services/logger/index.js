@@ -5,7 +5,7 @@ let logger;
 
 if (logger === undefined) {
   logger =
-    process.env.NODE_ENV === "production"
+    process.env.NODE_ENV === 'production'
       ? createProdLogger()
       : createDevLogger();
 }
