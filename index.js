@@ -56,8 +56,9 @@ async function startServer() {
       logger.error(err);
       return;
     }
+    getCustomerPaymentMethods();
     logger.info(`Server listens on port ${PORT}`);
   });
 }
 
-startServer();
+startServer();  

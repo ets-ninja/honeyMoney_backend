@@ -1,0 +1,5 @@
+{
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.definitionLinkOpensInPeek": false,
+    "prettier.configPath": ".prettierrc.json"
+}
