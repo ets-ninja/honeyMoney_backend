@@ -3,13 +3,18 @@ const router = express.Router();
 
 const paymentController = require('../controllers/payment.controllers');
 
-router.post('/secret', paymentController.setupFuturePayments );
+router.post('/setup_secret', paymentController.newSetupIntent );
 
-router.post('/cards', paymentController.getCustomerCards );
+router.post('/payment_secret', paymentController.newPaymentIntent );
 
-router.post('/transaction', paymentController.newTransaction );
+router.post('/usercards', paymentController.getCustomerCards );
 
-router.post('/transactions', paymentController.getTransactions );
+router.post('/userbalance', paymentController.getCustomerBalance )
+
+router.post('/transaction_new', paymentController.newTransaction );
+
+router.post('/transaction_history', paymentController.transactionsHistory);
+
 
 
 module.exports = router;

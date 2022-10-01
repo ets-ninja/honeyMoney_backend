@@ -1,5 +1,8 @@
 {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.definitionLinkOpensInPeek": false,
-    "prettier.configPath": ".prettierrc.json"
+    "prettier.configPath": "D:\\Projects\\ElifTechSchool\\HoneyMoney\\honeyMoney_backend\\.prettierrc.json",
+    "files.autoSave": "afterDelay",
+    "eslint.alwaysShowStatus": true,
+    "prettier.requireConfig": true
 }
