@@ -15,6 +15,7 @@ const MONGO_URL = process.env.MONGO_URL;
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const docsRoute = require('./routes/api-docs.routes');
+const payRoutes = require('./routes/payment.routes');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use(morganMiddleware);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/api_docs', docsRoute);
+app.use('/api/payment', payRoutes);
 
 // 404 Route should be at the end of all routes
 app.use((req, res, next) => {
@@ -58,7 +60,6 @@ async function startServer() {
       logger.error(err);
       return;
     }
-    getCustomerPaymentMethods();
     logger.info(`Server listens on port ${PORT}`);
   });
 }

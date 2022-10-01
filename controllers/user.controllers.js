@@ -56,8 +56,12 @@ async function createUser(req, res, next) {
 
   let customer_id;
   try{
-    const customer = await stripe.customers.create({ email: email, name: `${firstName} ${lastName}` });
-    customer_id = await bcrypt.hash(customer.id, 12)
+    const customer = await stripe.customers.create({ 
+        email: email, 
+        name: `${firstName} ${lastName}`, 
+        balance: '-100' 
+    });
+    customer_id = customer.id;
   }catch(err){
     const error = new HttpError(
         'Could not create a user. Please try again later.',
