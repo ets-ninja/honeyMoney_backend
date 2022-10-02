@@ -3,8 +3,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const HttpError = require('../utils/http-error');
 
-// eslint-disable-next-line no-undef
+// Constants
 const SECRET = process.env.TOKEN_SECRET;
+const { ERR } = require('../constants');
+
+// Models
 const User = require('../models/user.model');
 
 async function getUserDetails(req, res) {
@@ -28,11 +31,7 @@ async function createUser(req, res, next) {
   try {
     existingUser = await User.findOne({ email: email });
   } catch (err) {
-    const error = new HttpError(
-      'Signing up failed, please try again later.',
-      500,
-    );
-    return next(error);
+    return next(ERR.DB_FAILURE);
   }
 
   if (existingUser) {
@@ -90,24 +89,12 @@ async function updateUser(req, res, next) {
     return next(new HttpError('Invalid inputs passed.', 422));
   }
 
-  const { firstName, lastName, publicName, password } = req.body;
-
-  let hashedPassword;
-  try {
-    hashedPassword = await bcrypt.hash(password, 12);
-  } catch (err) {
-    const error = new HttpError(
-      'Could not update a user. Please try again later.',
-      500,
-    );
-    return next(error);
-  }
+  const { firstName, lastName, publicName } = req.body;
 
   const updatedUser = {
-    firstName,
-    lastName,
+    ...(firstName && { firstName }),
+    ...(lastName && { lastName }),
     ...(publicName && { publicName }),
-    password: hashedPassword,
   };
 
   let existingUser;
@@ -131,4 +118,38 @@ async function updateUser(req, res, next) {
   });
 }
 
-module.exports = { createUser, updateUser, getUserDetails };
+async function updatePassword(req, res, next) {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return next(new HttpError('Invalid inputs passed.', 422));
+  }
+
+  const { password, newPassword } = req.body;
+  const existingUser = req.user;
+  const isValidPassword = await bcrypt.compare(password, existingUser.password);
+
+  if (!isValidPassword) {
+    return next(new HttpError('Invalid password', 401));
+  }
+
+  const hash = await bcrypt.hash(newPassword, 12);
+  existingUser.password = hash;
+
+  try {
+    await existingUser.save();
+  } catch (err) {
+    const error = new HttpError(
+      'Updating failed, please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
+  res.status(200).json({
+    userId: existingUser.id,
+    message: 'Password updated',
+  });
+}
+
+module.exports = { createUser, updateUser, getUserDetails, updatePassword };
