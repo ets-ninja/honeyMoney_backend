@@ -217,6 +217,9 @@
       "post": {
         "summary": "Create a new item in the user's wishlist",
         "tags": ["Wishlist"],
+        "security": {
+          "bearerAuth": []
+        },
         "requestBody": {
           "required": true,
           "content": {
@@ -257,6 +260,9 @@
       "get": {
         "summary": "Get all items from the user's wishlist",
         "tags": ["Wishlist"],
+        "security": {
+          "bearerAuth": []
+        },
         "responses": {
           "200": {
             "description": "200 response. OK",
@@ -275,6 +281,9 @@
       "patch": {
         "summary": "Update info of item in wishlist",
         "tags": ["Wishlist"],
+        "security": {
+          "bearerAuth": []
+        },
         "parameters": [
           {
             "in": "path",
@@ -327,6 +336,9 @@
       "delete": {
         "summary": "Delete item from the user's wishlist",
         "tags": ["Wishlist"],
+        "security": {
+          "bearerAuth": []
+        },
         "parameters": [
           {
             "in": "path",
