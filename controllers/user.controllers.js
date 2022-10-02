@@ -10,12 +10,29 @@ const { ERR } = require('../constants');
 // Models
 const User = require('../models/user.model');
 
-async function getUserDetails(req, res) {
-  const { firstName, lastName, publicName, email, createdAt, id } = req.user;
+// Services
+const stripe = require('../services/stripe/');
 
-  res
-    .status(200)
-    .json({ firstName, lastName, publicName, email, createdAt, id });
+async function getUserDetails(req, res) {
+  const {
+    firstName,
+    lastName,
+    publicName,
+    email,
+    stripeUserId,
+    createdAt,
+    id,
+  } = req.user;
+
+  res.status(200).json({
+    firstName,
+    lastName,
+    publicName,
+    email,
+    stripeUserId,
+    createdAt,
+    id,
+  });
 }
 
 async function createUser(req, res, next) {
@@ -53,11 +70,25 @@ async function createUser(req, res, next) {
     return next(error);
   }
 
+  let stripeUserId;
+
+  try {
+    const stripeUser = await stripe.customers.create();
+    stripeUserId = stripeUser.id;
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create a user. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
   const createdUser = new User({
     firstName,
     lastName,
     publicName,
     email,
+    stripeUserId,
     password: hashedPassword,
   });
 

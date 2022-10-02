@@ -10,7 +10,7 @@ const userSchema = new Schema(
     publicName: { type: String },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    //   stripeUserId: { type: String, required: true },
+    stripeUserId: { type: String, required: true },
   },
   { timestamps: true },
 );
