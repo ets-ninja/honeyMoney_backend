@@ -414,6 +414,172 @@
           }
         }
       }
+    },
+    "/wishlist": {
+      "post": {
+        "summary": "Create a new item in the user's wishlist",
+        "tags": ["Wishlist"],
+        "security": {
+          "bearerAuth": []
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WishlistItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201 response. Created",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "success": {
+                    "value": "{\n \"id\": \"wishlist item id\",\n \"message\": \"New wishlist item created\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 response. Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_fields": {
+                    "value": "{\n \"message\": \"Invalid or not all inputs passed.\"\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get all items from the user's wishlist",
+        "tags": ["Wishlist"],
+        "security": {
+          "bearerAuth": []
+        },
+        "responses": {
+          "200": {
+            "description": "200 response. OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseWishlistItems"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wishlist/update/{wishlistItemId}": {
+      "patch": {
+        "summary": "Update info of item in wishlist",
+        "tags": ["Wishlist"],
+        "security": {
+          "bearerAuth": []
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "wishlistItemId",
+            "description": "User's wishlist item id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "required": true
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWishlistItem"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "202 response. Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseWishlistItems"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 response. Bad Request",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_ids": {
+                    "value": "{\n \"message\": \"Attempt to update not existing item.\"\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wishlist/delete/{wishlistItemId}": {
+      "delete": {
+        "summary": "Delete item from the user's wishlist",
+        "tags": ["Wishlist"],
+        "security": {
+          "bearerAuth": []
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "wishlistItemId",
+            "description": "User's wishlist item id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "required": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response. OK",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "success": {
+                    "value": "{\n \"message\": \"Wishlist item deleted\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400 response. Bad Request",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_ids": {
+                    "value": "{\n \"message\": \"Attempt to delete not existing item.\"\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -468,6 +634,64 @@
         "allOf": [
           {
             "$ref": "#/components/schemas/User"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "createdAt": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "WishlistItem": {
+        "type": "object",
+        "required": ["name", "ownerId", "finalGoal"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "ownerId": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "finalGoal": {
+            "type": "number"
+          }
+        }
+      },
+      "UpdateWishlistItem": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "image": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "finalGoal": {
+            "type": "number"
+          }
+        }
+      },
+      "ResponseWishlistItems": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WishlistItem"
           },
           {
             "type": "object",
