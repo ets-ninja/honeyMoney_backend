@@ -5,7 +5,7 @@ const stripe = require('stripe')(process.env.STRIPE_SK_TEST);
 
 // get customer balance
 async function getCustomerBalance(req, res, next) {
-  const { stripeUserId } = req.body; //req.query.
+  const { stripeUserId } = req.user;
   let balance;
   try {
     const customer = await stripe.customers.retrieve(stripeUserId);
@@ -19,7 +19,7 @@ async function getCustomerBalance(req, res, next) {
 
 // get customer cards info
 async function getCustomerCards(req, res, next) {
-  const { stripeUserId } = req.body;
+  const { stripeUserId } = req.user;
   let cards = [];
 
   try {
@@ -35,6 +35,7 @@ async function getCustomerCards(req, res, next) {
         country: paymentMethods.data[i].card.country,
         exp_month: paymentMethods.data[i].card.exp_month,
         exp_year: paymentMethods.data[i].card.exp_year,
+        last4: paymentMethods.data[i].card.last4,
       };
       cards.push(card);
     }
@@ -50,7 +51,7 @@ async function getCustomerCards(req, res, next) {
 
 // set up future payments for customer
 async function newSetupIntent(req, res, next) {
-  const { stripeUserId } = req.body;
+  const { stripeUserId } = req.user;
   let setupIntent;
   try {
     // returns client secret
@@ -65,15 +66,15 @@ async function newSetupIntent(req, res, next) {
     );
     return next(error);
   }
-
   res
     .status(200)
-    .json({ id: setupIntent.id, client_secret: setupIntent.client_secret });
+    .json({ id: setupIntent.id, client_secret: setupIntent.client_secret }) 
 }
 
 // payment from customer - one payment session - "donate" button
 async function newPaymentIntent(req, res, next) {
-  const { stripeUserId, amount, description, card } = req.body;
+  const { stripeUserId } = req.user;
+  const { amount, description, card } = req.body;
   let payment_secret = {};
   try {
     const paymentIntent = await stripe.paymentIntents.create({
@@ -81,7 +82,7 @@ async function newPaymentIntent(req, res, next) {
       amount: amount,
       currency: 'usd',
       description: description,
-      payment_method: card, //card_1Lnt0NKPhPFjc58JIB0FKljB
+      payment_method: card,
       automatic_payment_methods: { enabled: true },
     });
     payment_secret = {
@@ -100,7 +101,8 @@ async function newPaymentIntent(req, res, next) {
 
 // change customer balance
 async function newTransaction(req, res, next) {
-  const { stripeUserId, amount, description } = req.body;
+  const { stripeUserId } = req.user;
+  const { amount, description } = req.body;
   let balanceTransaction;
   try {
     balanceTransaction = await stripe.customers.createBalanceTransaction(
@@ -118,17 +120,15 @@ async function newTransaction(req, res, next) {
     );
     return next(error);
   }
-  res
-    .status(200)
-    .json({
-      id: balanceTransaction.id,
-      ending_balance: balanceTransaction.ending_balance,
-    });
+  res.status(200).json({
+    id: balanceTransaction.id,
+    ending_balance: balanceTransaction.ending_balance,
+  });
 }
 
 // get list of transactions
 async function transactionsHistory(req, res, next) {
-  const { stripeUserId } = req.body;
+  const { stripeUserId } = req.user;
   let transHistory = [];
   try {
     const transactions = await stripe.customers.listBalanceTransactions(
