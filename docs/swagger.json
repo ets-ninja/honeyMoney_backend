@@ -415,6 +415,59 @@
         }
       }
     },
+    "/user/update_photo": {
+      "put": {
+        "summary": "Update users photo",
+        "description": "Authorization header required.",
+        "tags": ["User"],
+
+        "security": {
+          "bearerAuth": []
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userPhoto"],
+                "properties": {
+                  "userPhoto": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "succes": {
+                    "value": "{\n \"userId\": \"user id here\",\n \"message\": \"User data updated\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_fields": {
+                    "value": "{\n \"message\": \"Invalid inputs passed.\"\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/wishlist": {
       "post": {
         "summary": "Create a new item in the user's wishlist",
@@ -598,6 +651,9 @@
             "type": "string"
           },
           "email": {
+            "type": "string"
+          },
+          "userPhoto": {
             "type": "string"
           }
         }

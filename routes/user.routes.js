@@ -44,5 +44,9 @@ router.patch(
   ],
   userController.updatePassword,
 );
+router.put('/update_photo', [
+  passport.authenticate('jwt', { session: false }),
+  check('userPhoto').not().isEmpty(),
+], userController.updateUserPhoto);
 
 module.exports = router;
