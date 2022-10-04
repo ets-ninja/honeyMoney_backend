@@ -42,7 +42,7 @@ async function getCustomerCards(req, res, next) {
     return res.status(200).json(cards);
   } catch (err) {
     const error = new HttpError(
-      'Could not find payments methods. Please add one first.',
+      'Could not find cards. Please add one first.',
       500,
     );
     return next(error);
@@ -51,7 +51,7 @@ async function getCustomerCards(req, res, next) {
 
 // set up future payments for customer
 async function newSetupIntent(req, res, next) {
-  const { stripeUserId } = req.user;
+  const { stripeUserId } = req.body;
   let setupIntent;
   try {
     // returns client secret
@@ -71,6 +71,22 @@ async function newSetupIntent(req, res, next) {
     .json({ id: setupIntent.id, client_secret: setupIntent.client_secret }) 
 }
 
+async function cancelSetupIntent(req, res, next){
+  const { setupId } = req.body;
+    const setupIntent = await stripe.setupIntents.cancel(
+        setupId
+      );
+      res.status(200).json(setupIntent);
+}
+
+async function listSetupIntents(req, res, next){
+    const { stripeUserId } = req.body;
+    const setupIntents = await stripe.setupIntents.list({
+        customer: stripeUserId,
+      });
+      res.status(200).json(setupIntents);
+}
+
 // payment from customer - one payment session - "donate" button
 async function newPaymentIntent(req, res, next) {
   const { stripeUserId } = req.user;
@@ -83,7 +99,7 @@ async function newPaymentIntent(req, res, next) {
       currency: 'usd',
       description: description,
       payment_method: card,
-      automatic_payment_methods: { enabled: true },
+      automatic_payment_methods: { enabled: true }
     });
     payment_secret = {
       id: paymentIntent.id,
@@ -115,7 +131,7 @@ async function newTransaction(req, res, next) {
     );
   } catch (err) {
     const error = new HttpError(
-      'Could not save card. Please try again later',
+      'Could not make a transaction. Please try again later',
       500,
     );
     return next(error);
@@ -146,7 +162,7 @@ async function transactionsHistory(req, res, next) {
     }
   } catch (err) {
     const error = new HttpError(
-      'Could not save card. Please try again later',
+      'Could not find transactions. Please try again later',
       500,
     );
     return next(error);
@@ -154,11 +170,45 @@ async function transactionsHistory(req, res, next) {
   res.status(200).json(transHistory);
 }
 
+async function giftDollar(req, res, next){
+    try{
+        const { setupIntentKey } = req.body
+        const { stripeUserId } = req.user
+        const setupIntent = await stripe.setupIntents.retrieve(setupIntentKey);
+        if(setupIntent.status == 'succeeded'){
+          const cards = await stripe.customers.listPaymentMethods(stripeUserId, { type: 'card' });
+          if(cards.data.length == 1){
+            const newTransaction = await stripe.customers.createBalanceTransaction(
+                'cus_MXC48hekonSFLw',
+                {
+                    amount: -100,
+                    currency: 'usd',
+                    description: 'Gift for first card added to your wallet',
+                },
+            );
+            if(newTransaction)
+                res
+                .status(200)
+                .json({ message: 'The gift has been successfully added to your account' }) 
+          }
+        }
+    }catch(err){
+        const error = new HttpError(
+          'Could not add gift. Please try again later',
+          500,
+        );
+        return next(error);
+    }
+}
+
 module.exports = {
   getCustomerBalance,
   getCustomerCards,
   newSetupIntent,
+  cancelSetupIntent,
+  listSetupIntents,
   newPaymentIntent,
   newTransaction,
   transactionsHistory,
+  giftDollar
 };

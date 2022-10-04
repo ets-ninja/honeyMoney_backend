@@ -14,6 +14,7 @@ const MONGO_URL = process.env.MONGO_URL;
 // Routes
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
+const wishlistRoutes = require('./routes/wishlist.routes');
 const docsRoute = require('./routes/api-docs.routes');
 const payRoutes = require('./routes/payment.routes');
 
@@ -25,6 +26,7 @@ app.use(express.json());
 app.use(morganMiddleware);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/api_docs', docsRoute);
 app.use('/api/payment', payRoutes);
 
