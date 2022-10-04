@@ -7,6 +7,7 @@ const passport = require('./middlewares/passport.middleware');
 const morganMiddleware = require('./middlewares/morgan.middleware');
 const logger = require('./services/logger');
 
+
 // Consts
 const PORT = process.env.PORT;
 const MONGO_URL = process.env.MONGO_URL;
@@ -16,12 +17,15 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const wishlistRoutes = require('./routes/wishlist.routes');
 const docsRoute = require('./routes/api-docs.routes');
+const bodyParser = require('body-parser');
 
 const app = express();
 
 app.use(cors());
 app.use(passport.initialize());
-app.use(express.json());
+// app.use(express.json());
+app.use(bodyParser.json({limit: "10mb", extended: true}))
+app.use(bodyParser.urlencoded({limit: "10mb", extended: true, parameterLimit: 50000}))
 app.use(morganMiddleware);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
