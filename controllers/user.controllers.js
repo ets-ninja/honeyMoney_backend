@@ -1,11 +1,13 @@
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const HttpError = require('../utils/http-error');
+const {
+  signToken,
+  signRefreshToken,
+} = require('../utils/authenticate.helpers');
 
 // Constants
-const SECRET = process.env.TOKEN_SECRET;
-const { ERR } = require('../constants');
+const { ERR, REFRESH_COOKIE_NAME } = require('../constants');
 
 // Models
 const User = require('../models/user.model');
@@ -70,12 +72,22 @@ async function createUser(req, res, next) {
 
   let token;
   try {
-    token = jwt.sign({ sub: createdUser.id }, SECRET, { expiresIn: '1h' });
+    token = signToken(createdUser.id);
   } catch (err) {
-    const error = new HttpError('Signing up failed, please try again.', 500);
-    return next(error);
+    return next(err);
   }
 
+  let refreshToken;
+  try {
+    refreshToken = signRefreshToken(existingUser.id);
+  } catch (err) {
+    return next(err);
+  }
+
+  res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
+    maxAge: 604800000,
+    httpOnly: true,
+  });
   res.status(201).json({
     userId: createdUser.id,
     token: 'Bearer ' + token,
