@@ -12,7 +12,7 @@ const { ERR, REFRESH_COOKIE_NAME } = require('../constants');
 
 // Models
 const User = require('../models/user.model');
-const ResetToken = require('../models/reset-token.model');
+const ResetToken = require('../models/email-token.model');
 
 // Services
 const sendRestorePasswordMessage = require('../services/email/messages/restorePassword');

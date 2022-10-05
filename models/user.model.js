@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
-
 const Schema = mongoose.Schema;
+
 
 const userSchema = new Schema(
   {
@@ -10,6 +10,7 @@ const userSchema = new Schema(
     publicName: { type: String },
     email: { type: String, required: true, unique: true },
     password: { type: String },
+    status: { type: String, required: true },
     userPhoto: { type: String, default: '' },
     //   stripeUserId: { type: String, required: true },
   },
@@ -23,6 +24,7 @@ userSchema.options.toObject.transform = function (doc, ret, options) {
   delete ret._id;
   delete ret.__v;
   delete ret.password;
+  delete ret.status;
   return ret;
 };
 

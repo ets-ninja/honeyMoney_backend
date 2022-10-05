@@ -2,7 +2,7 @@ const sendMessage = require('../message');
 
 const { EMAIL_EXPIRE } = require('../../../constants');
 
-const sendRestorePasswordMessage = async (to, { username, link }) => {
+const sendConfirmEmailMessage = async (to, { username, code }) => {
   const valid_hours = (EMAIL_EXPIRE / 3600).toFixed(1);
   return await sendMessage(
     to,
@@ -11,10 +11,10 @@ const sendRestorePasswordMessage = async (to, { username, link }) => {
     {
       email: to,
       username,
-      link,
+      code,
       valid_hours,
     },
   );
 };
 
-module.exports = sendRestorePasswordMessage;
+module.exports = sendConfirmEmailMessage;

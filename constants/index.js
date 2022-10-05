@@ -1,6 +1,6 @@
 const HttpError = require('../utils/http-error');
 
-const RESTORE_PASSWORD_EXPIRE = 3600;
+const EMAIL_EXPIRE = 3600;
 
 const REFRESH_COOKIE_NAME = 'restore';
 
@@ -12,4 +12,14 @@ const ERR = {
   ),
 };
 
-module.exports = { RESTORE_PASSWORD_EXPIRE, ERR, REFRESH_COOKIE_NAME };
+const USER_STATUS = {
+  PENDING: 'pending',
+  ACTIVE: 'active',
+};
+
+module.exports = {
+  EMAIL_EXPIRE,
+  ERR,
+  REFRESH_COOKIE_NAME,
+  USER_STATUS,
+};
