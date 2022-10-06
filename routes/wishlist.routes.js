@@ -29,5 +29,10 @@ router.delete(
   passport.authenticate('jwt', { session: false }),
   wishlistController.deleteWishlistItem,
 );
+router.get(
+  '/sorting/:page/:field/:order',
+  passport.authenticate('jwt', { session: false }),
+  wishlistController.sortWishlistItems,
+);
 
 module.exports = router;

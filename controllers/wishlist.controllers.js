@@ -122,9 +122,49 @@ async function deleteWishlistItem(req, res, next) {
   });
 }
 
+async function sortWishlistItems(req, res, next) {
+  const ownerId = req.user.id;
+  const { field, order } = req.params;
+  const page = +req.params.page || 1;
+  const itemsPerPage = 6;
+
+  const skip = (page - 1) * itemsPerPage;
+
+  // All sort settings
+  let sort = {};
+  sort[field] = order;
+
+  let sortedItems, countItems, pageCount;
+  try {
+    countItems = await WishlistItem.estimatedDocumentCount(ownerId);
+
+    sortedItems = await WishlistItem.find({ ownerId })
+      .sort(sort)
+      .limit(itemsPerPage)
+      .skip(skip);
+
+    pageCount = Math.ceil(countItems / itemsPerPage);
+  } catch (err) {
+    const error = new HttpError(
+      `Failed to get sorted items, please try again. ${err.message}`,
+      500,
+    );
+    return next(error);
+  }
+
+  return res.status(200).json({
+    pagination: {
+      countItems,
+      pageCount,
+    },
+    sortedItems,
+  });
+}
+
 module.exports = {
   createWishlistItem,
   getAllWishlistItems,
   updateWishlistItem,
   deleteWishlistItem,
+  sortWishlistItems,
 };
