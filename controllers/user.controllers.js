@@ -12,6 +12,11 @@ const { ERR, REFRESH_COOKIE_NAME } = require('../constants');
 // Models
 const User = require('../models/user.model');
 
+// Services
+const {
+  createCustomer,
+} = require('../services/stripe/create-customer.service');
+
 async function getUserDetails(req, res) {
   const { firstName, lastName, publicName, email, createdAt, id, userPhoto } =
     req.user;
@@ -56,12 +61,24 @@ async function createUser(req, res, next) {
     return next(error);
   }
 
+  let stripeUserId;
+  try {
+    stripeUserId = await createCustomer({ email, firstName, lastName });
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create a user. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
   const createdUser = new User({
     firstName,
     lastName,
     publicName,
     email,
     password: hashedPassword,
+    stripeUserId,
   });
 
   try {
@@ -80,7 +97,7 @@ async function createUser(req, res, next) {
 
   let refreshToken;
   try {
-    refreshToken = signRefreshToken(existingUser.id);
+    refreshToken = signRefreshToken(createdUser.id);
   } catch (err) {
     return next(err);
   }
