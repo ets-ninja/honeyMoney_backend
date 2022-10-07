@@ -34,12 +34,13 @@ async function createWishlistItem(req, res, next) {
     .json({ id: wishlistItem._id, message: 'New wishlist item created' });
 }
 
-async function getAllWishlistItems(req, res, next) {
-  const ownerId = req.user.id;
-  let wishlistItems;
+async function getWishlistItem(req, res, next) {
+  const { id: _id } = req.params;
+
+  let wishlistItem;
   try {
-    wishlistItems = await WishlistItem.find({
-      ownerId,
+    wishlistItem = await WishlistItem.find({
+      _id,
     });
   } catch (err) {
     const error = new HttpError(
@@ -49,9 +50,7 @@ async function getAllWishlistItems(req, res, next) {
     return next(error);
   }
 
-  return res.status(200).json({
-    ...wishlistItems,
-  });
+  return res.status(200).json(...wishlistItem);
 }
 
 async function updateWishlistItem(req, res, next) {
@@ -163,7 +162,7 @@ async function sortWishlistItems(req, res, next) {
 
 module.exports = {
   createWishlistItem,
-  getAllWishlistItems,
+  getWishlistItem,
   updateWishlistItem,
   deleteWishlistItem,
   sortWishlistItems,
