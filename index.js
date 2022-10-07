@@ -14,6 +14,7 @@ const MONGO_URL = process.env.MONGO_URL;
 // Routes
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
+const wishlistRoutes = require('./routes/wishlist.routes');
 const docsRoute = require('./routes/api-docs.routes');
 const basketRoutes = require('./routes/basket.routes');
 
@@ -26,6 +27,7 @@ app.use(morganMiddleware);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/basket', basketRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/api_docs', docsRoute);
 
 // 404 Route should be at the end of all routes

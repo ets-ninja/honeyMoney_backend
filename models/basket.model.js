@@ -11,7 +11,6 @@ const basketSchema = new Schema(
         value: { type: Number, required: true },
         expirationDate: { type: Date, required: true },
         isPublic: { type: Boolean, required: true },
-        isHot: { type: Boolean, default: false },
         creationDate: { type: Date, required: true },
         image: { type: Buffer }
     }

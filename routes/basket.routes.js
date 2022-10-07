@@ -18,12 +18,6 @@ router.get(
 );
 
 router.get(
-  '/get_hot_baskets',
-  passport.authenticate('jwt', { session: false }),
-  basketController.getHotBaskets,
-);
-
-router.get(
   '/get_public_baskets',
   passport.authenticate('jwt', { session: false }),
   basketController.getPublicBaskets,
@@ -41,7 +35,6 @@ router.post(
     check('name').not().isEmpty(),
     check('description').not().isEmpty(),
     check('goal').not().isEmpty(),
-    check('value').not().isEmpty(),
     check('expirationDate').not().isEmpty(),
     check('isPublic').not().isEmpty(),
     check('image').not().isEmpty(),
