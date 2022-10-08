@@ -12,6 +12,7 @@ const userSchema = new Schema(
     password: { type: String, required: true },
     userPhoto: { type: String, default: '' },
     stripeUserId: { type: String, required: true },
+    gift: { type: Boolean, required: true, default: false },
   },
   { timestamps: true },
 );

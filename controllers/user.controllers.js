@@ -70,6 +70,25 @@ async function createUser(req, res, next) {
     return next(error);
   }
 
+  let gift;
+  try {
+    const dollar = await stripe.customers.createBalanceTransaction(
+      customer_id,
+      {
+        amount: -100,
+        currency: 'usd',
+        description: 'Gift for creating an account',
+      },
+    );
+    if(dollar){ gift = true }
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create a user. Please try again later.',
+      500,
+      console.log(error)
+    );
+  }
+
   const createdUser = new User({
     firstName,
     lastName,
@@ -77,6 +96,7 @@ async function createUser(req, res, next) {
     email,
     password: hashedPassword,
     stripeUserId: customer_id,
+    gift,
   });
 
   try {

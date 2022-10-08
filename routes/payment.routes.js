@@ -18,7 +18,7 @@ router.post(
 
 router.get(
   '/usercards',
-  passport.authenticate('jwt', { session: false }),
+//   passport.authenticate('jwt', { session: false }),
   paymentController.getCustomerCards,
 );
 
@@ -39,5 +39,15 @@ router.get(
   passport.authenticate('jwt', { session: false }),
   paymentController.transactionsHistory,
 );
+
+// router.get(
+//     '/create_session',
+//     paymentController.createFinancialSession
+// )
+
+// router.get(
+//     '/balance',
+//     paymentController.refreshBalance
+// )
 
 module.exports = router;

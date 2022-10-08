@@ -9,7 +9,7 @@ async function getCustomerBalance(req, res, next) {
   let balance;
   try {
     const customer = await stripe.customers.retrieve(stripeUserId);
-    balance = customer.balance;
+    balance = customer.balance/(-100);
   } catch (err) {
     const error = new HttpError('Could not find customer.', 500);
     return next(error);
@@ -19,9 +19,8 @@ async function getCustomerBalance(req, res, next) {
 
 // get customer cards info
 async function getCustomerCards(req, res, next) {
-  const { stripeUserId } = req.user;
+  const { stripeUserId } = req.body;
   let cards = [];
-
   try {
     const paymentMethods = await stripe.customers.listPaymentMethods(
       stripeUserId,
@@ -71,6 +70,19 @@ async function newSetupIntent(req, res, next) {
     .json({ id: setupIntent.id, client_secret: setupIntent.client_secret });
 }
 
+// async function listSetupIntents(req, res, next){
+//     try{
+//         const {stripeUserId} = req.body
+//         const setupIntents = await stripe.setupIntents.list({
+//             customer: stripeUserId,
+//           });
+
+//           res.status(201).json(setupIntents);
+//     }catch(err){
+//         console.log(err)
+//     }
+// }
+
 // payment from customer - one payment session - "donate" button
 async function newPaymentIntent(req, res, next) {
   const { stripeUserId } = req.user;
@@ -79,9 +91,9 @@ async function newPaymentIntent(req, res, next) {
   try {
     const paymentIntent = await stripe.paymentIntents.create({
       customer: stripeUserId,
-      amount: amount,
+      amount,
+      description,
       currency: 'usd',
-      description: description,
       automatic_payment_methods: { enabled: true },
     });
     payment_secret = {
@@ -89,6 +101,7 @@ async function newPaymentIntent(req, res, next) {
       client_secret: paymentIntent.client_secret,
     };
   } catch (err) {
+    console.log(err)
     const error = new HttpError(
       'Could not create payment. Please try again later',
       500,
@@ -97,6 +110,18 @@ async function newPaymentIntent(req, res, next) {
   }
   res.status(201).json(payment_secret);
 }
+
+// async function listPaymentsIntents(req, res, next){
+//     try{
+//         const {stripeUserId} = req.body
+//         const paymentIntents = await stripe.paymentIntents.list({
+//             customer: stripeUserId
+//         });
+//         res.status(201).json(paymentIntents);
+//     }catch(err){
+//         console.log(err)
+//     }
+// }
 
 // change customer balance
 async function newTransaction(req, res, next) {
@@ -127,7 +152,7 @@ async function newTransaction(req, res, next) {
 
 // get list of transactions
 async function transactionsHistory(req, res, next) {
-  const { stripeUserId } = req.user;
+  const { stripeUserId } = req.body;
   let transHistory = [];
   try {
     const transactions = await stripe.customers.listBalanceTransactions(
@@ -152,6 +177,54 @@ async function transactionsHistory(req, res, next) {
   }
   res.status(200).json(transHistory);
 }
+
+
+// async function createFinancialAccount(req, res, next){
+//     try{
+//         const account = await stripe.accounts.create({
+//             country: 'US',
+//             type: 'custom',
+//             capabilities: {card_payments: {requested: true}, transfers: {requested: true}},
+//           });
+//     }catch(err){
+//         console.log(err)
+//     }
+// }
+
+// async function createFinancialSession(req, res, next){
+//     try{
+//         const {stripeUserId} = req.body
+//         const session = await stripe.financialConnections.sessions.create({
+//             account_holder: {
+//             type: 'customer',
+//             customer: stripeUserId,
+//             },
+//             permissions: ['payment_method', 'balances', 'transactions', 'ownership'],
+//             filters: {countries: ['US']},
+//         });
+//         res.status(200).json(session.client_secret);
+//     }catch(err){
+//         console.log(err)
+//     }
+// }
+
+// async function refreshBalance(req, res, next){
+//     try{
+//         const {finAcc} = req.body
+//         const account = await stripe.financialConnections.accounts.refresh(
+//             finAcc,
+//         {features: ['balance']}
+//       );
+//         // const balance = await stripe.financialConnections.accounts.retrieve(
+//         //     account.id
+//         // );
+//       res.status(200).json(account);
+//     }catch(err){
+//         console.log(err)
+//     }
+// }
+
+
 
 module.exports = {
   getCustomerBalance,
