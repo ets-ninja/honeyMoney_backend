@@ -6,6 +6,7 @@ const REFRESH_COOKIE_NAME = 'restore';
 
 const ERR = {
   DB_FAILURE: new HttpError('Search failed, please try again later.', 500),
+  INVALID_DATA: new HttpError('Invalid inputs passed.', 422),
   JWT_SIGN_FAILURE: new HttpError(
     'Something went wrong, please try again later.',
     500,

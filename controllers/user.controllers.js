@@ -17,6 +17,11 @@ const ConfirmEmailToken = require('../models/email-token.model');
 // Services
 const sendConfirmEmailMessage = require('../services/email/messages/confirmEmail');
 
+// Services
+const {
+  createCustomer,
+} = require('../services/stripe/create-customer.service');
+
 async function getUserDetails(req, res) {
   const { firstName, lastName, publicName, email, createdAt, id, userPhoto } =
     req.user;
@@ -30,7 +35,7 @@ async function createUser(req, res, next) {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    return next(new HttpError('Invalid inputs passed.', 422));
+    return next(ERR.INVALID_DATA);
   }
 
   const { firstName, lastName, publicName, email, password } = req.body;
@@ -67,7 +72,6 @@ async function createUser(req, res, next) {
     publicName,
     email,
     password: hashedPassword,
-    status: USER_STATUS.PENDING,
   });
 
   try {
@@ -99,7 +103,7 @@ async function createUser(req, res, next) {
   }
 
   res.status(201).json({
-    userId: createdUser.id,
+    user: createdUser.toObject({ getters: true }),
     message: 'Email with confirmation code sent',
   });
 }
@@ -108,7 +112,7 @@ async function confirmUserEmail(req, res, next) {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    return next(new HttpError('Invalid inputs passed.', 422));
+    return next(ERR.INVALID_DATA);
   }
 
   const { userId, code } = req.body;
@@ -134,12 +138,30 @@ async function confirmUserEmail(req, res, next) {
 
   let user;
   try {
-    user = await User.findOneAndUpdate(
-      {
-        _id: userId,
-      },
-      { status: USER_STATUS.ACTIVE },
+    user = await User.findOne({
+      _id: userId,
+    });
+  } catch (err) {
+    return next(ERR.DB_FAILURE);
+  }
+
+  const { email, firstName, lastName } = user;
+  let stripeUserId;
+  try {
+    stripeUserId = await createCustomer({ email, firstName, lastName });
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create a user. Please try again later.',
+      500,
     );
+    return next(error);
+  }
+
+  user.status = USER_STATUS.ACTIVE;
+  user.stripeUserId = stripeUserId;
+
+  try {
+    await user.save();
   } catch (err) {
     return next(ERR.DB_FAILURE);
   }
@@ -163,7 +185,7 @@ async function confirmUserEmail(req, res, next) {
     httpOnly: true,
   });
   res.status(200).json({
-    userId: user.id,
+    user: user.toObject(),
     token: 'Bearer ' + token,
   });
 }
@@ -172,7 +194,7 @@ async function resendConfirmUserEmail(req, res, next) {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    return next(new HttpError('Invalid inputs passed.', 422));
+    return next(ERR.INVALID_DATA);
   }
 
   const { userId } = req.body;
@@ -182,11 +204,9 @@ async function resendConfirmUserEmail(req, res, next) {
 
   let user;
   try {
-    user = await User.findOne(
-      {
-        _id: userId,
-      },
-    );
+    user = await User.findOne({
+      _id: userId,
+    });
   } catch (err) {
     return next(ERR.DB_FAILURE);
   }
@@ -221,7 +241,7 @@ async function updateUser(req, res, next) {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    return next(new HttpError('Invalid inputs passed.', 422));
+    return next(ERR.INVALID_DATA);
   }
 
   const { firstName, lastName, publicName } = req.body;
@@ -257,7 +277,7 @@ async function updatePassword(req, res, next) {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    return next(new HttpError('Invalid inputs passed.', 422));
+    return next(ERR.INVALID_DATA);
   }
 
   const { password, newPassword } = req.body;
@@ -291,7 +311,7 @@ async function updateUserPhoto(req, res, next) {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    return next(new HttpError('Invalid inputs passed.', 422));
+    return next(ERR.INVALID_DATA);
   }
 
   const { userPhoto } = req.body;

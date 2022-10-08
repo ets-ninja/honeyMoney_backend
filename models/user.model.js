@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 const Schema = mongoose.Schema;
 
+// Constants
+const { USER_STATUS } = require('../constants');
 
 const userSchema = new Schema(
   {
@@ -10,9 +12,9 @@ const userSchema = new Schema(
     publicName: { type: String },
     email: { type: String, required: true, unique: true },
     password: { type: String },
-    status: { type: String, required: true },
+    status: { type: String, default: USER_STATUS.PENDING },
     userPhoto: { type: String, default: '' },
-    //   stripeUserId: { type: String, required: true },
+    stripeUserId: { type: String },
   },
   { timestamps: true },
 );
