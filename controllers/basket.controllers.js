@@ -1,4 +1,6 @@
 const { validationResult } = require('express-validator');
+const mongoose = require('mongoose');
+const ObjectId = mongoose.Types.ObjectId;
 const HttpError = require('../utils/http-error');
 
 const Basket = require('../models/basket.model');
@@ -8,12 +10,12 @@ const onePageLimit = 5;
 
 const getOrderArgs = (order) => {
     switch(order) {
-        case "Newest to oldest": return "creationDate";
-        case "Oldest to newest": return "-creationDate";
-        case "Expensive to cheap": return "-goal";
-        case "Cheap to expensive": return "goal";
-        case "Soon to expire": return "expirationDate";
-        case "Far to expire": return "-expirationDate";
+        case "Newest to oldest": return { creationDate: -1, _id: 1 };
+        case "Oldest to newest": return { creationDate: 1, _id: 1 };
+        case "Expensive to cheap": return { goal: -1, _id: 1 };
+        case "Cheap to expensive": return { goal: 1, _id: 1 };
+        case "Soon to expire": return { expirationDate: 1, _id: 1 };
+        case "Far to expire": return { expirationDate: -1, _id: 1 };
     }
     return '';
 }
@@ -23,17 +25,17 @@ async function getOwnerBaskets(req, res, next) {
     const { page, order } = req.query;
     
     const bottomIndex = (page - 1) * onePageLimit;
-    
-    const ownerBasketCount = await Basket.countDocuments({ ownerId: id });
 
-    const baskets = await 
-        Basket.find({ ownerId: id })
+    const ownerBasketCount = await Basket.countDocuments({ ownerId: ObjectId(id) });
+
+    const baskets = await Basket
+        .find({ ownerId: id })
         .sort(getOrderArgs(order))
         .skip(bottomIndex)
-        .limit(onePageLimit) 
+        .limit(onePageLimit);
 
     res.status(200).json({
-        basketData: baskets, 
+        basketData: [...baskets], 
         paginationData: { maxPageAmount: Math.ceil(ownerBasketCount / onePageLimit) }
     });
 }
@@ -44,17 +46,28 @@ async function getCoownerBaskets(req, res, next) {
 
     const bottomIndex = (page - 1) * onePageLimit;
 
-    const coownerBasketCount = await Participants.countDocuments({ user: id });
+    const coownerBasketCount = await Participants.countDocuments({ user: ObjectId(id) });
 
-    const baskets = (await Participants.find({ user: id }).sort(getOrderArgs(order)).skip(bottomIndex).limit(onePageLimit) 
-        .populate('basket'))
-        .map((doc) => { return doc.basket });
+    const baskets = await Participants.aggregate([
+        { $match: { user: ObjectId(id) } },
+        { $lookup: 
+            { 
+                from: 'baskets',
+                localField: 'basket',
+                foreignField: '_id',
+                as: 'basket'
+            } 
+        },
+        { $replaceWith: { $first: "$basket" } },
+        { $sort: getOrderArgs(order) },
+        { $skip: bottomIndex },
+        { $limit: onePageLimit }
+    ])
     
-    res.status(200)
-        .json({
-            basketData: baskets, 
-            paginationData: { maxPageAmount: Math.ceil(coownerBasketCount / onePageLimit)}
-        });
+    res.status(200).json({
+        basketData: [...baskets], 
+        paginationData: { maxPageAmount: Math.ceil(coownerBasketCount / onePageLimit) }
+    });
 }
 
 async function getPublicBaskets(req, res, next) {
@@ -63,9 +76,9 @@ async function getPublicBaskets(req, res, next) {
 
     const bottomIndex = (page - 1) * onePageLimit;
     
-    const ownerBasketCount = await Basket.countDocuments({ ownerId: id, isPublic: true });
+    const ownerBasketCount = await Basket.countDocuments({ ownerId: ObjectId(id), isPublic: true });
     const coownerBasketCount = await 
-        Participants.find({ user: id })
+        Participants.find({ user: ObjectId(id) })
         .populate('basket')
         .where('basket.isPublic')
         .equals(true)
@@ -73,43 +86,30 @@ async function getPublicBaskets(req, res, next) {
 
     const totalBasketCount = ownerBasketCount + coownerBasketCount;
 
-    let ownerBaskets = [];
-    let coownerBaskets = [];
-
-    if(bottomIndex < ownerBasketCount){
-        const requestedOwnerBasketAmount = Math.min(ownerBasketCount - bottomIndex, onePageLimit);
-        
-        // can be changed a little bit (requestedOwnerBasketAmount => onePageLimit), tho it will not make any difference at all
-        ownerBaskets = await 
-            Basket.find({ ownerId: id, isPublic: true })
-            .sort(getOrderArgs(order))
-            .skip(bottomIndex)
-            .limit(requestedOwnerBasketAmount);
-
-        if(requestedOwnerBasketAmount < onePageLimit) {
-            coownerBaskets = (await 
-                Participants.find({ user: id })
-                .populate('basket')
-                .where('basket.isPublic')
-                .equals(true)
-                .sort(getOrderArgs(order))
-                .limit(onePageLimit - requestedOwnerBasketAmount)
-                ).map((doc) => { return doc.basket });
-        }
-    }
-    else{
-        coownerBaskets = (await 
-            Participants.find({ user: id })
-            .populate('basket')
-            .where('basket.isPublic')
-            .equals(true)
-            .sort(getOrderArgs(order))
-            .skip(bottomIndex - ownerBasketCount)
-            .limit(onePageLimit)
-            ).map((doc) => { return doc.basket });
-    }
-
-    const baskets = [...ownerBaskets, ...coownerBaskets];
+    const baskets = await Basket.aggregate([
+        { $match: { ownerId: ObjectId(id), isPublic: true } },
+        { 
+            $unionWith: { 
+                coll: 'participants', 
+                pipeline: [ 
+                    { $match: { user: ObjectId(id) } },
+                    { $lookup: 
+                        { 
+                            from: 'baskets',
+                            localField: 'basket',
+                            foreignField: '_id',
+                            as: 'basket'
+                        } 
+                    },
+                    { $replaceWith: { $first: "$basket" } },
+                    { $match: { isPublic: true } } 
+                ] 
+            } 
+        },
+        { $sort: getOrderArgs(order) },
+        { $skip: bottomIndex },
+        { $limit: onePageLimit }
+    ])
 
     res.status(200)
         .json({
@@ -124,52 +124,39 @@ async function getPrivateBaskets(req, res, next) {
 
     const bottomIndex = (page - 1) * onePageLimit;
     
-    const ownerBasketCount = await Basket.countDocuments({ ownerId: id, isPublic: false });
+    const ownerBasketCount = await Basket.countDocuments({ ownerId: ObjectId(id), isPublic: false });
     const coownerBasketCount = await 
-        Participants.find({ user: id })
+        Participants.find({ user: ObjectId(id) })
         .populate('basket')
         .where('basket.isPublic')
         .equals(false)
         .countDocuments();
     const totalBasketCount = ownerBasketCount + coownerBasketCount;
 
-    let ownerBaskets = [];
-    let coownerBaskets = [];
-
-    if(bottomIndex < ownerBasketCount){
-        const requestedOwnerBasketAmount = Math.min(ownerBasketCount - bottomIndex, onePageLimit);
-        
-        // can be changed a little bit (requestedOwnerBasketAmount => onePageLimit), tho it will not make any difference at all
-        ownerBaskets = await 
-            Basket.find({ ownerId: id, isPublic: false })
-            .sort(getOrderArgs(order))
-            .skip(bottomIndex)
-            .limit(requestedOwnerBasketAmount) 
-
-        if(requestedOwnerBasketAmount < onePageLimit) {
-            coownerBaskets = (await 
-                Participants.find({ user: id })
-                .populate('basket')
-                .where('basket.isPublic')
-                .equals(false)
-                .sort(getOrderArgs(order))
-                .limit(onePageLimit - requestedOwnerBasketAmount)
-                ).map((doc) => { return doc.basket });
-        }
-    }
-    else{
-        coownerBaskets = (await 
-            Participants.find({ user: id })
-            .populate('basket')
-            .where('basket.isPublic')
-            .equals(false)
-            .sort(getOrderArgs(order))
-            .skip(bottomIndex - ownerBasketCount)
-            .limit(onePageLimit)
-            ).map((doc) => { return doc.basket });
-    }
-
-    const baskets = [...ownerBaskets, ...coownerBaskets];
+    const baskets = await Basket.aggregate([
+        { $match: { ownerId: ObjectId(id), isPublic: false } },
+        { 
+            $unionWith: { 
+                coll: 'participants', 
+                pipeline: [ 
+                    { $match: { user: ObjectId(id) } },
+                    { $lookup: 
+                        { 
+                            from: 'baskets',
+                            localField: 'basket',
+                            foreignField: '_id',
+                            as: 'basket'
+                        } 
+                    },
+                    { $replaceWith: { $first: "$basket" } },
+                    { $match: { isPublic: false } } 
+                ] 
+            } 
+        },
+        { $sort: getOrderArgs(order) },
+        { $skip: bottomIndex },
+        { $limit: onePageLimit }
+    ])
 
     res.status(200)
         .json({

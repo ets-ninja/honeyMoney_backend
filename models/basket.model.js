@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 
 const basketSchema = new Schema(
     {
-        ownerId: { type: String, required: true },
+        ownerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
         name: { type: String, required: true },
         description: { type: String, required: true },
         goal: { type: Number, required: true },
@@ -12,7 +12,7 @@ const basketSchema = new Schema(
         expirationDate: { type: Date, required: true },
         isPublic: { type: Boolean, required: true },
         creationDate: { type: Date, required: true },
-        image: { type: Buffer }
+        image: { type: String }
     }
 )
 /*.plugin(function(schema, options) {
