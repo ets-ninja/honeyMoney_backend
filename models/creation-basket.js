@@ -9,7 +9,8 @@ const basketSchema = new Schema({
     isPublic: {type: Boolean, required: true},
     createdAt: {type: Number, required: true},
     currentValue: {type: Number, required: false, default: 0},
-    // userId + Image 
+    userId: {type: String, required: true},
+    photoTag: {type: String, required: false}
 });
 
 module.exports = mongoose.model('baskets', basketSchema);

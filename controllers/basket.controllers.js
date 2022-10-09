@@ -5,23 +5,22 @@ const BasketModel = require('../models/creation-basket');
 
 async function postBasket(req, res, next) {
 
-    const { basketName, description, moneyGoal, expirationDate, isPublic, createdAt, currentValue } = req.body
-    // const { id } = req.user;
+    const { basketName, description, moneyGoal, expirationDate, isPublic, createdAt } = req.body
+    const { id } = req.user;
     
-    const Basket = {
+    const newBasket = {
         basketName, 
         description, 
         moneyGoal, 
         expirationDate, 
         isPublic, 
         createdAt, 
-        currentValue,
-        // userId: id
+        userId: id
     }
 
     try {
         // await BasketModel(req.body).save()
-        console.log(Basket);
+        console.log(newBasket);
     } catch (error) {
         return console.log(error);
     }
