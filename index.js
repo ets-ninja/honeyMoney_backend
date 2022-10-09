@@ -27,10 +27,10 @@ app.use(express.json());
 app.use(morganMiddleware);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/basket', basketRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/api_docs', docsRoute);
 app.use('/api/payment', payRoutes);
-app.use('/api/basket', basketRoutes)
 
 // 404 Route should be at the end of all routes
 app.use((req, res, next) => {
