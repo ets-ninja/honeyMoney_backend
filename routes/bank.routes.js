@@ -1,6 +1,6 @@
 const router = require('express').Router();
 
-router.get('/share-bank', (req, res) => {
+router.get('/share-bank/:id', (req, res) => {
   res.render('index');
 });
 

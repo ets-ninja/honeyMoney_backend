@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const HttpError = require('../utils/http-error');
+const stripe = require('stripe')(process.env.STRIPE_SK_TEST);
 
 // Constants
 const SECRET = process.env.TOKEN_SECRET;
@@ -54,12 +55,28 @@ async function createUser(req, res, next) {
     return next(error);
   }
 
+  let customer_id;
+  try {
+    const customer = await stripe.customers.create({
+      email: email,
+      name: `${firstName} ${lastName}`,
+    });
+    customer_id = customer.id;
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create a user. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
   const createdUser = new User({
     firstName,
     lastName,
     publicName,
     email,
     password: hashedPassword,
+    stripeUserId: customer_id,
   });
 
   try {
