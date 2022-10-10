@@ -4,8 +4,7 @@ var serviceAccount = require('../../honeymoneyworker-firebase-adminsdk-4ru0p-4db
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL:
-    'firebase-adminsdk-4ru0p@honeymoneyworker.iam.gserviceaccount.com',
+  databaseURL: process.env.FIREBASE_DATABASE_URL,
 });
 
 const sendMessage = async () => {
