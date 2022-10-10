@@ -13,7 +13,7 @@ const sendMessage = async () => {
       data: {
         title: 'Hello',
         body: 'World',
-        clickAction: 'http//:localhost:3000/myjars',
+        clickAction: 'http://localhost:3000/myjars',
       },
       notification: {
         title: 'Alex Ordynski',
