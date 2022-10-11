@@ -128,7 +128,7 @@ async function newPaymentIntent(req, res, next) {
   res.status(201).json(payment_secret);
 }
 
-// calls when payment intent succeeded
+// calls when payment intent succeeded maybe shoud be merged with PaymentIntent func
 async function sendMoneyToBasket(req, res, next) {
   const { id } = req.user;
   const { paymentIntentId, basketId } = req.body;
@@ -159,7 +159,7 @@ async function sendMoneyToBasket(req, res, next) {
       stripeId: paymentIntent.id,
       amount: paymentIntent.amount,
       comment: paymentIntent.description,
-      card: paymentIntent.charges.data[0]. payment_method_details.card.last4,
+      card: paymentIntent.charges.data[0].payment_method_details.card.last4,
     });
     await newTransaction.save();
   } catch (err) {
