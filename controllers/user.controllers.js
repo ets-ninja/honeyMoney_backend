@@ -23,12 +23,9 @@ const {
 } = require('../services/stripe/create-customer.service');
 
 async function getUserDetails(req, res) {
-  const { firstName, lastName, publicName, email, createdAt, id, userPhoto } =
-    req.user;
-
   res
     .status(200)
-    .json({ firstName, lastName, publicName, email, createdAt, id, userPhoto });
+    .json(req.user.toObject({getters: true}));
 }
 
 async function createUser(req, res, next) {
@@ -185,7 +182,7 @@ async function confirmUserEmail(req, res, next) {
     httpOnly: true,
   });
   res.status(200).json({
-    user: user.toObject(),
+    user: user.toObject({getters: true}),
     token: 'Bearer ' + token,
   });
 }
@@ -216,7 +213,7 @@ async function resendConfirmUserEmail(req, res, next) {
       {
         userId,
       },
-      { token: hash },
+      { token: hash, userId },
       { overwrite: true, upsert: true },
     );
   } catch (err) {

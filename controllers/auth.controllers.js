@@ -73,7 +73,7 @@ async function loginUser(req, res, next) {
     })
     .status(200)
     .json({
-      userId: existingUser.id,
+      user: existingUser.toObject({ getters: true }),
       token: 'Bearer ' + token,
     });
 }
@@ -85,7 +85,6 @@ async function validateEmail(req, res, next) {
     return next(new HttpError('Invalid email passed.', 422));
   }
   const email = req.query.email.toLowerCase();
-  console.log(req.query);
 
   let existingUser;
 
