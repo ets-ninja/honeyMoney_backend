@@ -17,8 +17,8 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const wishlistRoutes = require('./routes/wishlist.routes');
 const docsRoute = require('./routes/api-docs.routes');
-const bank = require('./routes/bank.routes');
 const payRoutes = require('./routes/payment.routes');
+const basketRoutes = require('./routes/basket.routes')
 
 const app = express();
 
@@ -30,20 +30,19 @@ const hbs = expressHandlebars.create({
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.set('views', './views');
-app.use(express.static('public'));
 
 app.use(cors());
 app.use(passport.initialize());
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(morganMiddleware);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/basket', basketRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/api_docs', docsRoute);
-app.use('/api/bank', bank);
 app.use('/api/payment', payRoutes);
 
 // 404 Route should be at the end of all routes

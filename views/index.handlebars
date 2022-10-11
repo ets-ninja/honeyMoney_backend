@@ -2,21 +2,23 @@
   <div class='first_block'>
     <h3 class="logo">HoneyMoney</h3>
     <div class="banka">
-      <img  src='/img/Group 15.svg' alt='' />
+      <img src='/img/Group 15.svg' alt='' />
     </div>
     <div class='content'>
       <div class='prev'>
-        <img  src='/img/image 4.svg' alt='' />
-        <p> Сегргій Притула створив збір</p>
-        <h2>Ha пакети для орків</h4>
-        <p>Збираємо на пакети для мобілізованих орків тому що орки свої не
-          беруть
-        </p>
+        {{#if userPhoto.length}}
+          <img src={{userPhoto}} alt='userPhoto' />
+        {{else}}
+            <img src='/img/image 4.svg' alt='userPhoto' />
+        {{/if}}
+        <p> {{userName}} створив збір</p>
+        <h2>{{basketName}}</h4>
+        <p>{{description}}</p>
       </div>
       <div class='statistic'>
         <span>
           <h4>Accumulated</h4>
-          1$
+          {{accumulated}}$
         </span>
         <div>
         <hr>
@@ -24,7 +26,7 @@
         </div>
         <span>
           <h4>Goal</h4>
-          2$
+          {{goal}}$
         </span>
       </div>
     </div>
@@ -32,7 +34,7 @@
   <div class='second_block'>
     <p class="amount">Top up amount</p>
     <div class="money_input">
-      <input type='text' placeholder="0 $" name='' id=''/>
+      <input type='number' placeholder="0 $" min="0" name='' id=''/>
       <div class="money_buttons">
         <button>50$</button>
         <button>100$</button>
@@ -50,7 +52,7 @@
     <div class="buttons">
       <button>Donate</button>
       <div>
-        <a href="#">SingIn</a>
+        <a href="http://localhost:3000/login/?basketId=6334aaefefbecab9386639d3">SingIn</a>
         <a href="#">SingUp</a>
       </div>
     </div>

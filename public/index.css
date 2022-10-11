@@ -75,6 +75,8 @@ body {
 
 .prev p {
   max-width: 350px;
+  text-align: center;
+  margin: 0 auto;
 }
 
 .statistic {
@@ -88,6 +90,7 @@ body {
   background-color: #fff;
   margin: 20px;
   height: 80px;
+  width: 350px;
 }
 
 .statistic span {
