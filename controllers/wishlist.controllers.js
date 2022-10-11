@@ -126,7 +126,7 @@ async function sortWishlistItems(req, res, next) {
   const ownerId = req.user.id;
   const { field, order } = req.params;
   const page = +req.params.page || 1;
-  const itemsPerPage = 6;
+  const itemsPerPage = 8;
 
   const skip = (page - 1) * itemsPerPage;
 
@@ -136,7 +136,7 @@ async function sortWishlistItems(req, res, next) {
 
   let sortedItems, countItems, pageCount;
   try {
-    countItems = await WishlistItem.estimatedDocumentCount(ownerId);
+    countItems = await WishlistItem.countDocuments({ ownerId });
 
     sortedItems = await WishlistItem.find({ ownerId })
       .sort({ ...sort, _id: 1 })
