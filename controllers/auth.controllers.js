@@ -231,18 +231,21 @@ async function logoutUser(req, res, next) {
   if (notificationToken) {
     let { notificationTokens } = req.user;
 
+    let newNotificationToken;
     try {
-      notificationTokens.filter(token => token !== notificationToken);
+      newNotificationToken = notificationTokens.filter(
+        token => token !== notificationToken,
+      );
     } catch (err) {
       const error = new HttpError(
-        'Logout failed, please try again later.',
+        'Remove notification token failed, please try again later.',
         500,
       );
       return next(error);
     }
 
     const updatedUser = {
-      ...(notificationTokens && { notificationTokens }),
+      notificationTokens: newNotificationToken,
     };
 
     try {
@@ -251,7 +254,7 @@ async function logoutUser(req, res, next) {
       });
     } catch (err) {
       const error = new HttpError(
-        'Logout failed, please try again later.',
+        'Remove notification token failed, please try again later.',
         500,
       );
       return next(error);
