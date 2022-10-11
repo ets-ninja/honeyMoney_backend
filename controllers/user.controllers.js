@@ -20,6 +20,7 @@ const {
     changeBalance,
 } = require('../services/stripe/transactions/stripe/change-balance.service');
 
+
 async function getUserDetails(req, res) {
   const { firstName, lastName, publicName, email, createdAt, id, userPhoto } =
     req.user;
