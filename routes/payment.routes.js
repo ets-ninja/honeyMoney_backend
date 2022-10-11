@@ -4,6 +4,19 @@ const passport = require('passport');
 
 const paymentController = require('../controllers/payment.controllers');
 
+
+router.get(
+    '/userbalance',
+    passport.authenticate('jwt', { session: false }),
+    paymentController.getCustomerBalance,
+);
+
+router.get(
+    '/usercards',
+    passport.authenticate('jwt', { session: false }),
+    paymentController.getCustomerCards,
+);
+
 router.post(
   '/setup_secret',
   passport.authenticate('jwt', { session: false }),
@@ -16,38 +29,29 @@ router.post(
   paymentController.newPaymentIntent,
 );
 
-router.get(
-  '/usercards',
-//   passport.authenticate('jwt', { session: false }),
-  paymentController.getCustomerCards,
-);
-
-router.get(
-  '/userbalance',
-  passport.authenticate('jwt', { session: false }),
-  paymentController.getCustomerBalance,
-);
-
 router.post(
-  '/transaction_new',
-  passport.authenticate('jwt', { session: false }),
-  paymentController.newTransaction,
+    '/donate',
+    passport.authenticate('jwt', { session: false }),
+    paymentController.sendMoneyToBasket,
 );
 
 router.get(
-  '/transaction_history',
+  '/user_transaction_history',
   passport.authenticate('jwt', { session: false }),
-  paymentController.transactionsHistory,
+  paymentController.userTransactionsHistory,
 );
 
-// router.get(
-//     '/create_session',
-//     paymentController.createFinancialSession
-// )
+router.get(
+    '/recieve_money',
+    passport.authenticate('jwt', { session: false }),
+    paymentController.receiveMoney,
+  );
 
-// router.get(
-//     '/balance',
-//     paymentController.refreshBalance
-// )
+  router.post(
+    '/create_conn_account',
+    passport.authenticate('jwt', { session: false }),
+    paymentController.createConnectedAccount,
+  );
+
 
 module.exports = router;

@@ -1,15 +1,24 @@
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const HttpError = require('../utils/http-error');
-const stripe = require('stripe')(process.env.STRIPE_SK_TEST);
+const {
+  signToken,
+  signRefreshToken,
+} = require('../utils/authenticate.helpers');
 
 // Constants
-const SECRET = process.env.TOKEN_SECRET;
-const { ERR } = require('../constants');
+const { ERR, REFRESH_COOKIE_NAME } = require('../constants');
 
 // Models
 const User = require('../models/user.model');
+
+// Services
+const {
+  createCustomer,
+} = require('../services/stripe/create-customer.service');
+const {
+    changeBalance,
+} = require('../services/stripe/transactions/stripe/change-balance.service');
 
 async function getUserDetails(req, res) {
   const { firstName, lastName, publicName, email, createdAt, id, userPhoto } =
@@ -55,13 +64,9 @@ async function createUser(req, res, next) {
     return next(error);
   }
 
-  let customer_id;
+  let stripeUserId;
   try {
-    const customer = await stripe.customers.create({
-      email: email,
-      name: `${firstName} ${lastName}`,
-    });
-    customer_id = customer.id;
+    stripeUserId = await createCustomer({ email, firstName, lastName });
   } catch (err) {
     const error = new HttpError(
       'Could not create a user. Please try again later.',
@@ -70,23 +75,21 @@ async function createUser(req, res, next) {
     return next(error);
   }
 
-  let gift;
+  let gift = false;
   try {
-    const dollar = await stripe.customers.createBalanceTransaction(
-      customer_id,
-      {
-        amount: -100,
-        currency: 'usd',
-        description: 'Gift for creating an account',
-      },
-    );
-    if(dollar){ gift = true }
+    const transaction = await changeBalance({
+      stripeUserId,
+      amount: '-100',
+      description: 'Gift for create account',
+    });
+    console.log(stripeUserId)
+    if(transaction) {gift = true}
   } catch (err) {
     const error = new HttpError(
       'Could not create a user. Please try again later.',
       500,
-      console.log(error)
     );
+    return next(error);
   }
 
   const createdUser = new User({
@@ -95,8 +98,8 @@ async function createUser(req, res, next) {
     publicName,
     email,
     password: hashedPassword,
-    stripeUserId: customer_id,
-    gift,
+    stripeUserId,
+    gift
   });
 
   try {
@@ -108,12 +111,22 @@ async function createUser(req, res, next) {
 
   let token;
   try {
-    token = jwt.sign({ sub: createdUser.id }, SECRET, { expiresIn: '1h' });
+    token = signToken(createdUser.id);
   } catch (err) {
-    const error = new HttpError('Signing up failed, please try again.', 500);
-    return next(error);
+    return next(err);
   }
 
+  let refreshToken;
+  try {
+    refreshToken = signRefreshToken(createdUser.id);
+  } catch (err) {
+    return next(err);
+  }
+
+  res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
+    maxAge: 604800000,
+    httpOnly: true,
+  });
   res.status(201).json({
     userId: createdUser.id,
     token: 'Bearer ' + token,

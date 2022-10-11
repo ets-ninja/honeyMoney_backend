@@ -1,28 +1,23 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-//sreated at
-//description
-//amount
-//type - balance or card
-//bankaId
-//user id
-//balance transactions - only gift or transactions when we pay from banka to client
 const transactionSchema = new Schema({
-    // bankId:{
-    //     type: Schema.Types.ObjectId,
-    //     ref: 'Banka',
-    //     required: true,
-    // },
+    basketId:{
+        type: Schema.Types.ObjectId,
+        ref: 'Basket',
+        required: true,
+    },
     userId:{
         type: Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
-    transactionId:{ type: String, required: true },
+    stripeId: { type: String, required: true },
     amount: { type: Number, required: true },
     comment: { type: String, required: true, default: '' },
-    type: {type: String, enum:['balance', 'card']}
+    card: { type: Number },
+    // type: {type: String, enum:['balance', 'card']},
+    status: {type: String, required: true, enum:['succeeded', 'canceled']}
 })
 
 
