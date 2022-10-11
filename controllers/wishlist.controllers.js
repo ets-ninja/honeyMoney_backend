@@ -139,7 +139,7 @@ async function sortWishlistItems(req, res, next) {
     countItems = await WishlistItem.estimatedDocumentCount(ownerId);
 
     sortedItems = await WishlistItem.find({ ownerId })
-      .sort(sort)
+      .sort({ ...sort, _id: 1 })
       .limit(itemsPerPage)
       .skip(skip);
 
