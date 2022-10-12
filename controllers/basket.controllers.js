@@ -186,7 +186,7 @@ async function createBasket(req, res, next) {
             expirationDate: req.body.expirationDate,
             isPublic: req.body.isPublic,
             creationDate: +new Date(),
-            // image: req.body.photoTag
+            image: req.body.photoTag
         })
         console.log(basket);
     }
