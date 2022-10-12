@@ -37,7 +37,7 @@ async function getPublicJars(req, res, next) {
       ...lookupAndUnwind,
     ]);
 
-    if (!jarsWithUser || jarsWithUser.length === 0) {
+    if (jarsWithUser.length === 0) {
       res.status(200).send('Nothing found');
       return;
     }
@@ -63,7 +63,7 @@ async function getJarsByFilter(req, res, next) {
 
     const excludeParticpants = await getParticipantsIds(userId);
 
-    const foundUsersJars = await Basket.aggregate([
+    const foundJars = await Basket.aggregate([
       {
         $match: {
           isPublic: true,
@@ -71,34 +71,34 @@ async function getJarsByFilter(req, res, next) {
           _id: { $nin: excludeParticpants },
         },
       },
-      ...lookupAndUnwind,
-    ]);
-
-    const foundJars = await Basket.aggregate([
       {
-        $match: {
-          isPublic: true,
-          ownerId: { $nin: [userId, ...includeUsers] },
-          _id: { $nin: excludeParticpants },
-          $text: { $search: filterQuery },
+        $unionWith: {
+          coll: 'baskets',
+          pipeline: [
+            {
+              $match: {
+                isPublic: true,
+                ownerId: { $nin: [userId, ...includeUsers] },
+                _id: { $nin: excludeParticpants },
+                $text: { $search: filterQuery },
+              },
+            },
+            {
+              $sort: { score: { $meta: 'textScore' } },
+            },
+          ],
         },
       },
-      {
-        $sort: { score: { $meta: 'textScore' } },
-      },
       ...lookupAndUnwind,
     ]);
 
-    if (
-      (!foundUsersJars && !foundJars) ||
-      (foundUsersJars.length === 0 && foundJars.length === 0)
-    ) {
+    if (foundJars.length === 0) {
       res.status(200).send('Nothing found');
       return;
     }
 
     res.status(200).json({
-      jars: [...foundUsersJars, ...foundJars],
+      jars: [...foundJars],
       users: matchedUsers,
     });
   } catch (error) {
