@@ -1,14 +1,21 @@
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const HttpError = require('../utils/http-error');
+const {
+  signToken,
+  signRefreshToken,
+} = require('../utils/authenticate.helpers');
 
 // Constants
-const SECRET = process.env.TOKEN_SECRET;
-const { ERR } = require('../constants');
+const { ERR, REFRESH_COOKIE_NAME } = require('../constants');
 
 // Models
 const User = require('../models/user.model');
+
+// Services
+const {
+  createCustomer,
+} = require('../services/stripe/create-customer.service');
 
 async function getUserDetails(req, res) {
   const { firstName, lastName, publicName, email, createdAt, id, userPhoto } =
@@ -54,12 +61,24 @@ async function createUser(req, res, next) {
     return next(error);
   }
 
+  let stripeUserId;
+  try {
+    stripeUserId = await createCustomer({ email, firstName, lastName });
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create a user. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
   const createdUser = new User({
     firstName,
     lastName,
     publicName,
     email,
     password: hashedPassword,
+    stripeUserId,
   });
 
   try {
@@ -71,12 +90,22 @@ async function createUser(req, res, next) {
 
   let token;
   try {
-    token = jwt.sign({ sub: createdUser.id }, SECRET, { expiresIn: '1h' });
+    token = signToken(createdUser.id);
   } catch (err) {
-    const error = new HttpError('Signing up failed, please try again.', 500);
-    return next(error);
+    return next(err);
   }
 
+  let refreshToken;
+  try {
+    refreshToken = signRefreshToken(createdUser.id);
+  } catch (err) {
+    return next(err);
+  }
+
+  res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
+    maxAge: 604800000,
+    httpOnly: true,
+  });
   res.status(201).json({
     userId: createdUser.id,
     token: 'Bearer ' + token,
