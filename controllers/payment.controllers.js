@@ -163,14 +163,14 @@ async function sendMoneyToBasket(req, res, next) {
     });
     await newTransaction.save();
   } catch (err) {
-    console.log(err)
+    console.log(err);
     const error = new HttpError(
       'Could not create transactions. Please try again later',
       500,
     );
     return next(error);
   }
-  res.status(201).json({mes: 'Donate successful'});
+  res.status(201).json({ mes: 'Donate successful' });
 }
 
 // get list of transactions
@@ -274,7 +274,7 @@ async function createConnectedAccount(req, res, next) {
 
   await User.findOneAndUpdate(
     { _id: req.user.id },
-    {connectedAccount: connectedAccount.id}
+    { connectedAccount: connectedAccount.id },
   );
 
   let accountLink;
@@ -303,5 +303,5 @@ module.exports = {
   userTransactionsHistory,
   receiveMoney,
   createConnectedAccount,
-  sendMoneyToBasket
+  sendMoneyToBasket,
 };
