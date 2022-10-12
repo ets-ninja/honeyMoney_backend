@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const HttpError = require('./utils/http-error');
 const passport = require('./middlewares/passport.middleware');
@@ -8,6 +9,7 @@ const morganMiddleware = require('./middlewares/morgan.middleware');
 const logger = require('./services/logger');
 
 // Consts
+const APP_URL = process.env.APP_URL;
 const PORT = process.env.PORT;
 const MONGO_URL = process.env.MONGO_URL;
 
@@ -21,9 +23,11 @@ const basketRoutes = require('./routes/basket.routes')
 
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: APP_URL, credentials: true }));
+app.use(cookieParser());
 app.use(passport.initialize());
-app.use(express.json());
+app.use(express.json({limit: "10mb", extended: true}))
+app.use(express.urlencoded({limit: "10mb", extended: true, parameterLimit: 50000}))
 app.use(morganMiddleware);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
