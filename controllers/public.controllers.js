@@ -22,9 +22,25 @@ const lookupAndUnwind = [
 
 async function getPublicJars(req, res, next) {
   const userId = req.user?._id;
+  const page = +req.params.page || 1;
+  const itemsPerPage = +req.params.perPage || 9;
+  const skip = (page - 1) * itemsPerPage;
 
   try {
     const excludeParticpants = await getParticipantsIds(userId);
+
+    const [{ jarsCount }] = await Basket.aggregate([
+      {
+        $match: {
+          isPublic: true,
+          ownerId: { $ne: userId },
+          _id: { $nin: excludeParticpants },
+        },
+      },
+      {
+        $count: 'jarsCount',
+      },
+    ]);
 
     const jarsWithUser = await Basket.aggregate([
       {
@@ -34,6 +50,8 @@ async function getPublicJars(req, res, next) {
           _id: { $nin: excludeParticpants },
         },
       },
+      { $skip: skip },
+      { $limit: itemsPerPage },
       ...lookupAndUnwind,
     ]);
 
@@ -42,7 +60,13 @@ async function getPublicJars(req, res, next) {
       return;
     }
 
+    const pageCount = Math.ceil(jarsCount / itemsPerPage);
+
     res.status(200).json({
+      pagination: {
+        pageCount,
+        jarsCount,
+      },
       jars: [...jarsWithUser],
     });
   } catch (error) {
@@ -53,6 +77,9 @@ async function getPublicJars(req, res, next) {
 async function getJarsByFilter(req, res, next) {
   const userId = req.user?._id;
   const { filterQuery } = req.query;
+  const page = +req.params.page || 1;
+  const itemsPerPage = +req.params.perPage || 9;
+  const skip = (page - 1) * itemsPerPage;
 
   try {
     const matchedUsers = await User.find({
@@ -62,6 +89,34 @@ async function getJarsByFilter(req, res, next) {
     const includeUsers = matchedUsers.map(el => el._id);
 
     const excludeParticpants = await getParticipantsIds(userId);
+
+    const [{ jarsCount }] = await Basket.aggregate([
+      {
+        $match: {
+          isPublic: true,
+          ownerId: { $in: includeUsers },
+          _id: { $nin: excludeParticpants },
+        },
+      },
+      {
+        $unionWith: {
+          coll: 'baskets',
+          pipeline: [
+            {
+              $match: {
+                isPublic: true,
+                ownerId: { $nin: [userId, ...includeUsers] },
+                _id: { $nin: excludeParticpants },
+                $text: { $search: filterQuery },
+              },
+            },
+          ],
+        },
+      },
+      {
+        $count: 'jarsCount',
+      },
+    ]);
 
     const foundJars = await Basket.aggregate([
       {
@@ -89,6 +144,8 @@ async function getJarsByFilter(req, res, next) {
           ],
         },
       },
+      { $skip: skip },
+      { $limit: itemsPerPage },
       ...lookupAndUnwind,
     ]);
 
@@ -97,7 +154,13 @@ async function getJarsByFilter(req, res, next) {
       return;
     }
 
+    const pageCount = Math.ceil(jarsCount / itemsPerPage);
+
     res.status(200).json({
+      pagination: {
+        pageCount,
+        jarsCount,
+      },
       jars: [...foundJars],
       users: matchedUsers,
     });
@@ -109,9 +172,22 @@ async function getJarsByFilter(req, res, next) {
 async function getUserJars(req, res, next) {
   const userId = req.user?._id;
   const { userToFind } = req.query;
+  const page = +req.params.page || 1;
+  const itemsPerPage = +req.params.perPage || 1;
+  const skip = (page - 1) * itemsPerPage;
 
   try {
     const excludeParticpants = await getParticipantsIds(userId);
+
+    const [{ jarsCount }] = await Basket.aggregate([
+      {
+        $match: {
+          isPublic: true,
+          ownerId: ObjectId(userToFind),
+          _id: { $nin: excludeParticpants },
+        },
+      },
+    ]);
 
     const jarsWithUser = await Basket.aggregate([
       {
@@ -121,15 +197,23 @@ async function getUserJars(req, res, next) {
           _id: { $nin: excludeParticpants },
         },
       },
+      { $skip: skip },
+      { $limit: itemsPerPage },
       ...lookupAndUnwind,
     ]);
 
-    if (!jarsWithUser || jarsWithUser.length === 0) {
+    if (jarsWithUser.length === 0) {
       res.status(200).send('Nothing found');
       return;
     }
 
+    const pageCount = Math.ceil(jarsCount / itemsPerPage);
+
     res.status(200).json({
+      pagination: {
+        pageCount,
+        jarsCount,
+      },
       jars: [...jarsWithUser],
     });
   } catch (error) {
