@@ -176,19 +176,6 @@ async function createBasket(req, res, next) {
 
     let basket;
     console.log(req.body);
-    // try{
-    //     basket = await Basket.create({
-    //         ownerId: req.user._id,
-    //         name: req.body.name,
-    //         description: req.body.description,
-    //         goal: req.body.goal,
-    //         value: 0,
-    //         expirationDate: req.body.expirationDate,
-    //         isPublic: req.body.isPublic,
-    //         creationDate: Date.now(),
-    //         image: req.body.image
-    //     })
-    // }
     try{
         basket = await Basket.create({
             ownerId: req.user._id,
