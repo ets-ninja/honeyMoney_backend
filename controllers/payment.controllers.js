@@ -139,7 +139,7 @@ async function sendMoneyToBasket(req, res, next) {
   // send money to basket
   try {
     await changeBalance({
-      stripeUserId: basket.balance_id,
+      stripeUserId: basket.stripeId,
       amount: `-${paymentIntent.amount}`,
       description: paymentIntentId.description,
     });
