@@ -8,6 +8,14 @@ const getParticipantsIds = async userId => {
   return participants.map(el => el?.basket);
 };
 
+const getPaginationSettings = req => {
+  const page = +req.params.page || 1;
+  const itemsPerPage = +req.params.perPage || 9;
+  const skip = (page - 1) * itemsPerPage;
+
+  return { page, itemsPerPage, skip };
+};
+
 const lookupAndUnwind = [
   {
     $lookup: {
@@ -22,34 +30,28 @@ const lookupAndUnwind = [
 
 async function getPublicJars(req, res, next) {
   const userId = req.user?._id;
-  const page = +req.params.page || 1;
-  const itemsPerPage = +req.params.perPage || 9;
-  const skip = (page - 1) * itemsPerPage;
+  const { itemsPerPage, skip } = getPaginationSettings(req);
 
   try {
     const excludeParticpants = await getParticipantsIds(userId);
 
-    const [{ jarsCount }] = await Basket.aggregate([
-      {
-        $match: {
-          isPublic: true,
-          ownerId: { $ne: userId },
-          _id: { $nin: excludeParticpants },
-        },
+    const matchStage = {
+      $match: {
+        isPublic: true,
+        ownerId: { $ne: userId },
+        _id: { $nin: excludeParticpants },
       },
+    };
+
+    const [{ jarsCount } = { jarsCount: 0 }] = await Basket.aggregate([
+      matchStage,
       {
         $count: 'jarsCount',
       },
     ]);
 
     const jarsWithUser = await Basket.aggregate([
-      {
-        $match: {
-          isPublic: true,
-          ownerId: { $ne: userId },
-          _id: { $nin: excludeParticpants },
-        },
-      },
+      matchStage,
       { $skip: skip },
       { $limit: itemsPerPage },
       ...lookupAndUnwind,
@@ -77,9 +79,7 @@ async function getPublicJars(req, res, next) {
 async function getJarsByFilter(req, res, next) {
   const userId = req.user?._id;
   const { filterQuery } = req.query;
-  const page = +req.params.page || 1;
-  const itemsPerPage = +req.params.perPage || 9;
-  const skip = (page - 1) * itemsPerPage;
+  const { itemsPerPage, skip } = getPaginationSettings(req);
 
   try {
     const matchedUsers = await User.find({
@@ -90,14 +90,16 @@ async function getJarsByFilter(req, res, next) {
 
     const excludeParticpants = await getParticipantsIds(userId);
 
-    const [{ jarsCount }] = await Basket.aggregate([
-      {
-        $match: {
-          isPublic: true,
-          ownerId: { $in: includeUsers },
-          _id: { $nin: excludeParticpants },
-        },
+    const matchStage = {
+      $match: {
+        isPublic: true,
+        ownerId: { $in: includeUsers },
+        _id: { $nin: excludeParticpants },
       },
+    };
+
+    const [{ jarsCount } = { jarsCount: 0 }] = await Basket.aggregate([
+      matchStage,
       {
         $unionWith: {
           coll: 'baskets',
@@ -119,13 +121,7 @@ async function getJarsByFilter(req, res, next) {
     ]);
 
     const foundJars = await Basket.aggregate([
-      {
-        $match: {
-          isPublic: true,
-          ownerId: { $in: includeUsers },
-          _id: { $nin: excludeParticpants },
-        },
-      },
+      matchStage,
       {
         $unionWith: {
           coll: 'baskets',
@@ -172,31 +168,25 @@ async function getJarsByFilter(req, res, next) {
 async function getUserJars(req, res, next) {
   const userId = req.user?._id;
   const { userToFind } = req.query;
-  const page = +req.params.page || 1;
-  const itemsPerPage = +req.params.perPage || 1;
-  const skip = (page - 1) * itemsPerPage;
+  const { itemsPerPage, skip } = getPaginationSettings(req);
 
   try {
     const excludeParticpants = await getParticipantsIds(userId);
 
-    const [{ jarsCount }] = await Basket.aggregate([
-      {
-        $match: {
-          isPublic: true,
-          ownerId: ObjectId(userToFind),
-          _id: { $nin: excludeParticpants },
-        },
+    const matchStage = {
+      $match: {
+        isPublic: true,
+        ownerId: ObjectId(userToFind),
+        _id: { $nin: excludeParticpants },
       },
+    };
+
+    const [{ jarsCount } = { jarsCount: 0 }] = await Basket.aggregate([
+      matchStage,
     ]);
 
     const jarsWithUser = await Basket.aggregate([
-      {
-        $match: {
-          isPublic: true,
-          ownerId: ObjectId(userToFind),
-          _id: { $nin: excludeParticpants },
-        },
-      },
+      matchStage,
       { $skip: skip },
       { $limit: itemsPerPage },
       ...lookupAndUnwind,
