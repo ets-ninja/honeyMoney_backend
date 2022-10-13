@@ -124,8 +124,8 @@ async function deleteWishlistItem(req, res, next) {
 
 async function sortWishlistItems(req, res, next) {
   const ownerId = req.user.id;
-  const { field, order } = req.params;
-  const page = +req.params.page || 1;
+  const { field, order } = req.query;
+  const page = +req.query.page || 1;
   const itemsPerPage = 8;
 
   const skip = (page - 1) * itemsPerPage;
