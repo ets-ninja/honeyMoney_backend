@@ -16,11 +16,13 @@ const ConfirmEmailToken = require('../models/email-token.model');
 
 // Services
 const sendConfirmEmailMessage = require('../services/email/messages/confirmEmail');
-
-// Services
 const {
   createCustomer,
 } = require('../services/stripe/create-customer.service');
+const {
+    changeBalance,
+} = require('../services/stripe/transactions/stripe/change-balance.service');
+
 
 async function getUserDetails(req, res) {
   res
@@ -154,8 +156,25 @@ async function confirmUserEmail(req, res, next) {
     return next(error);
   }
 
+  let gift = false;
+  try {
+    const transaction = await changeBalance({
+      stripeUserId,
+      amount: '-100',
+      description: 'Gift for create account',
+    });
+    if(transaction) {gift = true}
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create a user. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
   user.status = USER_STATUS.ACTIVE;
   user.stripeUserId = stripeUserId;
+  user.gift = gift;
 
   try {
     await user.save();
@@ -338,6 +357,51 @@ async function updateUserPhoto(req, res, next) {
   });
 }
 
+async function addNotificationToken(req, res, next) {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return next(new HttpError('Invalid inputs passed.', 422));
+  }
+  let { notificationTokens } = req.user;
+
+  const { notificationToken } = req.body;
+
+  try {
+    notificationTokens.push(notificationToken);
+  } catch (err) {
+    const error = new HttpError(
+      'Updating failed, please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
+  const updatedUser = {
+    ...(notificationTokens && { notificationTokens }),
+  };
+
+  let existingUser;
+  try {
+    existingUser = await User.findOneAndUpdate(
+      { _id: req.user.id },
+      updatedUser,
+      { new: true },
+    );
+  } catch (err) {
+    const error = new HttpError(
+      'Updating failed, please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
+  res.status(200).json({
+    userId: existingUser.id,
+    message: 'Notification token added',
+  });
+}
+
 module.exports = {
   createUser,
   confirmUserEmail,
@@ -346,4 +410,5 @@ module.exports = {
   getUserDetails,
   updatePassword,
   updateUserPhoto,
+  addNotificationToken,
 };

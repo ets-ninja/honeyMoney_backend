@@ -224,7 +224,42 @@ function refreshUserAcces(req, res, next) {
   });
 }
 
-function logoutUser(req, res, next) {
+async function logoutUser(req, res, next) {
+  const { notificationToken } = req.body;
+
+  if (notificationToken) {
+    let { notificationTokens } = req.user;
+
+    let newNotificationToken;
+    try {
+      newNotificationToken = notificationTokens.filter(
+        token => token !== notificationToken,
+      );
+    } catch (err) {
+      const error = new HttpError(
+        'Remove notification token failed, please try again later.',
+        500,
+      );
+      return next(error);
+    }
+
+    const updatedUser = {
+      notificationTokens: newNotificationToken,
+    };
+
+    try {
+      await User.findOneAndUpdate({ _id: req.user.id }, updatedUser, {
+        new: true,
+      });
+    } catch (err) {
+      const error = new HttpError(
+        'Remove notification token failed, please try again later.',
+        500,
+      );
+      return next(error);
+    }
+  }
+
   res
     .clearCookie(REFRESH_COOKIE_NAME)
     .status(200)

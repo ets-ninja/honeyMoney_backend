@@ -15,6 +15,9 @@ const userSchema = new Schema(
     status: { type: String, default: USER_STATUS.PENDING },
     userPhoto: { type: String, default: '' },
     stripeUserId: { type: String },
+    notificationTokens: [{ type: String, unique: true }],
+    connectedAccount: { type: String },
+    gift: { type: Boolean, required: true, default: false },
   },
   { timestamps: true },
 );
