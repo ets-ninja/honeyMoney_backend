@@ -30,7 +30,7 @@ router.delete(
   wishlistController.deleteWishlistItem,
 );
 router.get(
-  '/sorting/:page/:field/:order',
+  '/sorting',
   passport.authenticate('jwt', { session: false }),
   wishlistController.sortWishlistItems,
 );
