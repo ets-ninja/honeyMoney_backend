@@ -1,12 +1,14 @@
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
 const HttpError = require('../utils/http-error');
+const {
+  signToken,
+  signRefreshToken,
+} = require('../utils/authenticate.helpers');
 
 // Constants
-const SECRET = process.env.TOKEN_SECRET;
-const { ERR } = require('../constants');
+const { ERR, REFRESH_COOKIE_NAME } = require('../constants');
 
 // Models
 const User = require('../models/user.model');
@@ -52,16 +54,28 @@ async function loginUser(req, res, next) {
 
   let token;
   try {
-    token = jwt.sign({ sub: existingUser.id }, SECRET, { expiresIn: '1h' });
+    token = signToken(existingUser.id);
   } catch (err) {
-    const error = new HttpError('Logging in failed, please try again.', 500);
-    return next(error);
+    return next(err);
   }
 
-  res.status(200).json({
-    userId: existingUser.id,
-    token: 'Bearer ' + token,
-  });
+  let refreshToken;
+  try {
+    refreshToken = signRefreshToken(existingUser.id);
+  } catch (err) {
+    return next(err);
+  }
+
+  res
+    .cookie(REFRESH_COOKIE_NAME, refreshToken, {
+      maxAge: 604800000,
+      httpOnly: true,
+    })
+    .status(200)
+    .json({
+      userId: existingUser.id,
+      token: 'Bearer ' + token,
+    });
 }
 
 async function validateEmail(req, res, next) {
@@ -183,9 +197,47 @@ async function resetPassword(req, res, next) {
   res.status(200).json({ message: 'Password updated' });
 }
 
+async function googleLogin(req, res, next) {
+  let refreshToken;
+  try {
+    refreshToken = signRefreshToken(req.user.id);
+  } catch (err) {
+    return next(err);
+  }
+
+  res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
+    maxAge: 604800000,
+    httpOnly: true,
+  });
+  res.status(301).redirect(`${process.env.APP_URL}`);
+}
+
+function refreshUserAcces(req, res, next) {
+  let token;
+  try {
+    token = signToken(req.user.id);
+  } catch (err) {
+    return next(err);
+  }
+  res.status(200).json({
+    user: { ...req.user.toObject(), id: req.user.id },
+    token: `Bearer ${token}`,
+  });
+}
+
+function logoutUser(req, res, next) {
+  res
+    .clearCookie(REFRESH_COOKIE_NAME)
+    .status(200)
+    .json({ message: 'Logout succesful' });
+}
+
 module.exports = {
   loginUser,
   validateEmail,
   restorePassword,
   resetPassword,
+  googleLogin,
+  refreshUserAcces,
+  logoutUser,
 };

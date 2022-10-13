@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
 const HttpError = require('./utils/http-error');
 const passport = require('./middlewares/passport.middleware');
@@ -9,6 +10,7 @@ const logger = require('./services/logger');
 const expressHandlebars = require('express-handlebars');
 const path = require('path');
 // Consts
+const APP_URL = process.env.APP_URL;
 const PORT = process.env.PORT;
 const MONGO_URL = process.env.MONGO_URL;
 
@@ -22,6 +24,7 @@ const basketRoutes = require('./routes/basket.routes')
 
 const app = express();
 
+
 const hbs = expressHandlebars.create({
   defaultLayout: 'main',
   extname: 'handlebars',
@@ -31,7 +34,8 @@ app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.set('views', './views');
 
-app.use(cors());
+app.use(cors({ origin: APP_URL, credentials: true }));
+app.use(cookieParser());
 app.use(passport.initialize());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
