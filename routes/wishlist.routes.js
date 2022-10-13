@@ -15,7 +15,7 @@ router.post(
   wishlistController.createWishlistItem,
 );
 router.get(
-  '/:id',
+  '/getitem/:id',
   passport.authenticate('jwt', { session: false }),
   wishlistController.getWishlistItem,
 );
