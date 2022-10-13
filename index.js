@@ -20,7 +20,8 @@ const userRoutes = require('./routes/user.routes');
 const wishlistRoutes = require('./routes/wishlist.routes');
 const docsRoute = require('./routes/api-docs.routes');
 const payRoutes = require('./routes/payment.routes');
-const basketRoutes = require('./routes/basket.routes')
+const basketRoutes = require('./routes/basket.routes');
+const shareBasket = require('./routes/share-basket.routes');
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use(morganMiddleware);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/basket', basketRoutes);
+app.use('/basket', shareBasket)
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/api_docs', docsRoute);
 app.use('/api/payment', payRoutes);

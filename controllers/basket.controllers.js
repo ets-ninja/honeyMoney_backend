@@ -260,19 +260,33 @@ async function shareBasket(req, res, next) {
       userName: owner.firstName,
       userPhoto: owner.userPhoto,
     });
-
-
-
   } catch (error) {
     console.log(error);
   }
 }
+
+const getPublicBasket = async (req, res) => {
+  const basket = await Basket.findOne({ _id: req.params.id });
+  const owner = await User.findOne({ _id: basket.ownerId });
+
+  try {
+    if (!basket._id) {
+      const error = new HttpError('Invalid basket link', 404);
+      return next(error);
+    }
+
+    return res.status(201).json({ basketInfo: basket, ownerInfo: owner });
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 module.exports = {
   getOwnerBaskets,
   getCoownerBaskets,
   getPublicBaskets,
   getPrivateBaskets,
+  getPublicBasket,
   createBasket,
   updateBasket,
   deleteBasket,

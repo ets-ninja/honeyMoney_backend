@@ -51,7 +51,6 @@ router.delete(
   basketController.deleteBasket,
 )
 
-router.get('/share-bank/:id', basketController.shareBasket);
-
+router.get('/get-public-basket/:id', basketController.getPublicBasket)
 
 module.exports = router;
