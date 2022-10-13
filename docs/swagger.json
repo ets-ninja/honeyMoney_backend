@@ -7,7 +7,7 @@
   "servers": [
     {
       "url": "http://localhost:5000/api",
-      "description": "Loacal development server"
+      "description": "Local development server"
     }
   ],
   "paths": {
@@ -127,18 +127,6 @@
               }
             }
           },
-          "422": {
-            "description": "422 response",
-            "content": {
-              "application/json": {
-                "examples": {
-                  "invalid_email": {
-                    "value": "{\n \"message\": \"Invalid email passed\"\n}\n"
-                  }
-                }
-              }
-            }
-          },
           "404": {
             "description": "404 response",
             "content": {
@@ -146,6 +134,18 @@
                 "examples": {
                   "invalid_email": {
                     "value": "{\n \"message\": \"Email address does not exists\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_email": {
+                    "value": "{\n \"message\": \"Invalid email passed\"\n}\n"
                   }
                 }
               }
@@ -209,6 +209,18 @@
               }
             }
           },
+          "404": {
+            "description": "404 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_email": {
+                    "value": "{\n \"message\": \"Email address does not exists\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
           "422": {
             "description": "422 response",
             "content": {
@@ -223,14 +235,49 @@
                 }
               }
             }
-          },
-          "404": {
-            "description": "404 response",
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Logout",
+        "tags": ["Authentication"],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "notificationToken": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200 response",
             "content": {
               "application/json": {
                 "examples": {
-                  "invalid_email": {
-                    "value": "{\n \"message\": \"Email address does not exists\"\n}\n"
+                  "succes": {
+                    "value": "{\n \"message\": \"Logout succesful\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "db_error": {
+                    "value": "{\n \"message\": \"Remove notification token failed, please try again later.\"\n}\n"
                   }
                 }
               }
@@ -420,7 +467,6 @@
         "summary": "Update users photo",
         "description": "Authorization header required.",
         "tags": ["User"],
-
         "security": {
           "bearerAuth": []
         },
@@ -459,6 +505,58 @@
               "application/json": {
                 "examples": {
                   "invalid_fields": {
+                    "value": "{\n \"message\": \"Invalid inputs passed.\"\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/add_notification": {
+      "post": {
+        "summary": "Add notification token",
+        "description": "Authorization header required.",
+        "tags": ["User"],
+        "security": {
+          "bearerAuth": []
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["notificationToken"],
+                "properties": {
+                  "notificationToken": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "succes": {
+                    "value": "{\n \"userId\": \"user id here\",\n \"message\": \"Notification token added\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_inputs": {
                     "value": "{\n \"message\": \"Invalid inputs passed.\"\n}\n"
                   }
                 }
@@ -626,6 +724,166 @@
                 "examples": {
                   "invalid_ids": {
                     "value": "{\n \"message\": \"Attempt to delete not existing item.\"\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "payment/usercards": {
+      "get": {
+        "summary": "Return all user`s cards",
+        "tags": ["Payment"],
+        "security": {
+          "bearerAuth": []
+        },
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "succes": {
+                    "value": "[\n  \"id\":\"card`s id\"\n  \"brand\":\"card`s brand\"\n  \"country\":\"card`s country\"\n  \"exp_month\":\"expiration month\"\n  \"exp_year\":\"expiration year\"\n  \"last4\":\"last 4 numbers of card\"\n]\n"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 response. Internal Server Error",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_fields": {
+                    "value": "{\n \"message\": \"Could not find cards. Please add one first.\"\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "payment/userbalance": {
+      "get": {
+        "summary": "Return user`s balance",
+        "tags": ["Payment"],
+        "security": {
+          "bearerAuth": []
+        },
+        "responses": {
+          "200": {
+            "description": "200 OK",
+            "schema": null,
+            "content": {
+              "application/json": {
+                "examples": {
+                  "succes": {
+                    "value": "\"balance\": \"user`s balance\"\n"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 response. Internal Server Error",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_fields": {
+                    "value": "{\n \"message\": \"Could not find cards. Please add one first.\"\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "payment/setup_secret": {
+      "post": {
+        "summary": "Create new Setup Intent for card",
+        "tags": ["Payment"],
+        "security": {
+          "bearerAuth": []
+        },
+        "responses": {
+          "201": {
+            "description": "201 response. Created",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "success": {
+                    "value": "{\n \"id\": \"setup intent id\",\n \"client secret\": \"Setup Intent client secret\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 response. Internal Server Error",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_fields": {
+                    "value": "{\n \"message\": \"Could not save card. Please try again later.\"\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "payment/payment_secret": {
+      "post": {
+        "summary": "Create new Payment Intent",
+        "tags": ["Payment"],
+        "security": {
+          "bearerAuth": []
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["amount", "description"],
+                "properties": {
+                  "amount": {
+                    "type": "integer"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201 response. Created",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "success": {
+                    "value": "{\n \"id\": \"payment intent id\",\n \"client secret\": \"Payment Intent client secret\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 response. Internal Server Error",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_fields": {
+                    "value": "{\n \"message\": \"Could not create payment. Please try again later\"\n}\n"
                   }
                 }
               }
