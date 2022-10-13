@@ -35,7 +35,7 @@ router.post(
     check('name').not().isEmpty(),
     check('description').not().isEmpty(),
     check('goal').not().isEmpty(),
-    check('expirationDate').not().isEmpty(),
+    //check('expirationDate').not().isEmpty(),
     check('isPublic').not().isEmpty(),
     check('image').not().isEmpty(),
   ],
@@ -50,6 +50,12 @@ router.put(
 router.delete(
   '/delete_basket/:id',
   basketController.deleteBasket,
+)
+
+router.get(
+  '/get_basket_by_id',
+  passport.authenticate('jwt', { session: false }),
+  basketController.getBasketById,
 )
 
 module.exports = router;

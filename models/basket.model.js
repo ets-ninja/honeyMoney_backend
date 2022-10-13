@@ -9,17 +9,11 @@ const basketSchema = new Schema(
         description: { type: String, required: true },
         goal: { type: Number, required: true },
         value: { type: Number, required: true },
-        expirationDate: { type: Date, required: true },
+        expirationDate: { type: Date },
         isPublic: { type: Boolean, required: true },
-        creationDate: { type: Date, required: true },
         image: { type: String }
-    }
+    },
+    { timestamps: true },
 )
-/*.plugin(function(schema, options) {
-    schema.pre('save', function(next) {
-        this.status.isHot = (new Date(Date.parse(this.status.expirationDate) - Date.now()).getDate() < 7);
-        next();
-    })
-})*/
 
 module.exports = mongoose.model('Baskets', basketSchema);
