@@ -27,7 +27,11 @@ router.post(
   authController.loginUser,
 );
 
-router.get('/logout', authController.logoutUser);
+router.post(
+  '/logout',
+  passport.authenticate('jwt', { session: false }),
+  authController.logoutUser,
+);
 
 router.get(
   '/google',

@@ -16,14 +16,33 @@ const User = require('../models/user.model');
 const {
   createCustomer,
 } = require('../services/stripe/create-customer.service');
+const {
+    changeBalance,
+} = require('../services/stripe/transactions/stripe/change-balance.service');
+
 
 async function getUserDetails(req, res) {
-  const { firstName, lastName, publicName, email, createdAt, id, userPhoto } =
-    req.user;
+  const {
+    firstName,
+    lastName,
+    publicName,
+    email,
+    createdAt,
+    id,
+    userPhoto,
+    notificationTokens,
+  } = req.user;
 
-  res
-    .status(200)
-    .json({ firstName, lastName, publicName, email, createdAt, id, userPhoto });
+  res.status(200).json({
+    firstName,
+    lastName,
+    publicName,
+    email,
+    createdAt,
+    id,
+    userPhoto,
+    notificationTokens,
+  });
 }
 
 async function createUser(req, res, next) {
@@ -72,6 +91,23 @@ async function createUser(req, res, next) {
     return next(error);
   }
 
+  let gift = false;
+  try {
+    const transaction = await changeBalance({
+      stripeUserId,
+      amount: '-100',
+      description: 'Gift for create account',
+    });
+    console.log(stripeUserId)
+    if(transaction) {gift = true}
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create a user. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
   const createdUser = new User({
     firstName,
     lastName,
@@ -79,6 +115,8 @@ async function createUser(req, res, next) {
     email,
     password: hashedPassword,
     stripeUserId,
+    notificationTokens: [],
+    gift
   });
 
   try {
@@ -216,10 +254,56 @@ async function updateUserPhoto(req, res, next) {
   });
 }
 
+async function addNotificationToken(req, res, next) {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return next(new HttpError('Invalid inputs passed.', 422));
+  }
+  let { notificationTokens } = req.user;
+
+  const { notificationToken } = req.body;
+
+  try {
+    notificationTokens.push(notificationToken);
+  } catch (err) {
+    const error = new HttpError(
+      'Updating failed, please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
+  const updatedUser = {
+    ...(notificationTokens && { notificationTokens }),
+  };
+
+  let existingUser;
+  try {
+    existingUser = await User.findOneAndUpdate(
+      { _id: req.user.id },
+      updatedUser,
+      { new: true },
+    );
+  } catch (err) {
+    const error = new HttpError(
+      'Updating failed, please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
+  res.status(200).json({
+    userId: existingUser.id,
+    message: 'Notification token added',
+  });
+}
+
 module.exports = {
   createUser,
   updateUser,
   getUserDetails,
   updatePassword,
   updateUserPhoto,
+  addNotificationToken,
 };
