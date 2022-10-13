@@ -25,7 +25,8 @@ const app = express();
 app.use(cors({ origin: APP_URL, credentials: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
-app.use(express.json());
+app.use(express.json({limit: "10mb", extended: true}))
+app.use(express.urlencoded({limit: "10mb", extended: true, parameterLimit: 50000}))
 app.use(morganMiddleware);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
