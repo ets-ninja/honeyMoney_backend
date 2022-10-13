@@ -68,6 +68,7 @@ passport.use(
             publicName: name,
             email,
             stripeUserId,
+            notificationTokens: [],
           },
           function (err, user) {
             if (err) {
