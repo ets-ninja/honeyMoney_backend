@@ -4,6 +4,18 @@ const passport = require('passport');
 
 const paymentController = require('../controllers/payment.controllers');
 
+router.get(
+  '/userbalance',
+  passport.authenticate('jwt', { session: false }),
+  paymentController.getCustomerBalance,
+);
+
+router.get(
+  '/usercards',
+  passport.authenticate('jwt', { session: false }),
+  paymentController.getCustomerCards,
+);
+
 router.post(
   '/setup_secret',
   passport.authenticate('jwt', { session: false }),
@@ -16,28 +28,28 @@ router.post(
   paymentController.newPaymentIntent,
 );
 
-router.get(
-  '/usercards',
+router.post(
+  '/donate',
   passport.authenticate('jwt', { session: false }),
-  paymentController.getCustomerCards,
+  paymentController.sendMoneyToBasket,
 );
 
 router.get(
-  '/userbalance',
+  '/user_transaction_history',
   passport.authenticate('jwt', { session: false }),
-  paymentController.getCustomerBalance,
+  paymentController.userTransactionsHistory,
+);
+
+router.get(
+  '/recieve_money',
+  passport.authenticate('jwt', { session: false }),
+  paymentController.receiveMoney,
 );
 
 router.post(
-  '/transaction_new',
+  '/create_conn_account',
   passport.authenticate('jwt', { session: false }),
-  paymentController.newTransaction,
-);
-
-router.get(
-  '/transaction_history',
-  passport.authenticate('jwt', { session: false }),
-  paymentController.transactionsHistory,
+  paymentController.createConnectedAccount,
 );
 
 module.exports = router;

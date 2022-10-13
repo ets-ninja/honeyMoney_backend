@@ -16,6 +16,10 @@ const User = require('../models/user.model');
 const {
   createCustomer,
 } = require('../services/stripe/create-customer.service');
+const {
+    changeBalance,
+} = require('../services/stripe/transactions/stripe/change-balance.service');
+
 
 async function getUserDetails(req, res) {
   const { firstName, lastName, publicName, email, createdAt, id, userPhoto } =
@@ -72,6 +76,23 @@ async function createUser(req, res, next) {
     return next(error);
   }
 
+  let gift = false;
+  try {
+    const transaction = await changeBalance({
+      stripeUserId,
+      amount: '-100',
+      description: 'Gift for create account',
+    });
+    console.log(stripeUserId)
+    if(transaction) {gift = true}
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create a user. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
   const createdUser = new User({
     firstName,
     lastName,
@@ -79,6 +100,7 @@ async function createUser(req, res, next) {
     email,
     password: hashedPassword,
     stripeUserId,
+    gift
   });
 
   try {
