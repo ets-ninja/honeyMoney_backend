@@ -1,294 +1,143 @@
+
 const { validationResult } = require('express-validator');
-const mongoose = require('mongoose');
-const ObjectId = mongoose.Types.ObjectId;
 const HttpError = require('../utils/http-error');
 
 const Basket = require('../models/basket.model');
 const Participants = require('../models/participant.model');
-const User = require('../models/user.model');
 
-const onePageLimit = 5;
-
-const getOrderArgs = order => {
-  switch (order) {
-    case 'Newest to oldest':
-      return { creationDate: -1, _id: 1 };
-    case 'Oldest to newest':
-      return { creationDate: 1, _id: 1 };
-    case 'Expensive to cheap':
-      return { goal: -1, _id: 1 };
-    case 'Cheap to expensive':
-      return { goal: 1, _id: 1 };
-    case 'Soon to expire':
-      return { expirationDate: 1, _id: 1 };
-    case 'Far to expire':
-      return { expirationDate: -1, _id: 1 };
-  }
-  return '';
-};
+/*
+function includes(baskets, basket) {
+    for(let i = 0; i < baskets.length; i++){
+        if(JSON.stringify(baskets[i]) === JSON.stringify(basket)) { return true; }
+    }
+    return false;
+}s
+*/
 
 async function getOwnerBaskets(req, res, next) {
-  const { id } = req.user;
-  const { page, order } = req.query;
+    if(!req.user){
+        return next(new HttpError('A user is not logged in.', 401));
+    }
 
-  const bottomIndex = (page - 1) * onePageLimit;
-
-  const ownerBasketCount = await Basket.countDocuments({
-    ownerId: ObjectId(id),
-  });
-
-  const baskets = await Basket.find({ ownerId: id })
-    .sort(getOrderArgs(order))
-    .skip(bottomIndex)
-    .limit(onePageLimit);
-
-  res.status(200).json({
-    basketData: [...baskets],
-    paginationData: {
-      maxPageAmount: Math.ceil(ownerBasketCount / onePageLimit),
-    },
-  });
+    const baskets = await Basket.find({ ownerId: req.user._id });
+    res.status(200).json(baskets);
 }
 
 async function getCoownerBaskets(req, res, next) {
-  const { id } = req.user;
-  const { page, order } = req.query;
+    if(!req.user){
+        return next(new HttpError('A user is not logged in.', 401));
+    }
 
-  const bottomIndex = (page - 1) * onePageLimit;
+    const baskets = await (await Participants.find({ user: req.user._id }).populate('basket'))
+                                .map((doc) => {
+                                    console.log(new Date(Date.parse(doc.basket.expirationDate) - Date.now()).getDate())
+                                    doc.basket.isHot = (new Date(Date.parse(doc.basket.expirationDate) - Date.now()).getDate() < 7);
+                                    return doc.basket;
+                                })
 
-  const coownerBasketCount = await Participants.countDocuments({
-    user: ObjectId(id),
-  });
+    res.status(200).json([...baskets])
+}
 
-  const baskets = await Participants.aggregate([
-    { $match: { user: ObjectId(id) } },
-    {
-      $lookup: {
-        from: 'baskets',
-        localField: 'basket',
-        foreignField: '_id',
-        as: 'basket',
-      },
-    },
-    { $replaceWith: { $first: '$basket' } },
-    { $sort: getOrderArgs(order) },
-    { $skip: bottomIndex },
-    { $limit: onePageLimit },
-  ]);
+async function getHotBaskets(req, res, next) {
+    if(!req.user){
+        return next(new HttpError('A user is not logged in.', 401));
+    }
 
-  res.status(200).json({
-    basketData: [...baskets],
-    paginationData: {
-      maxPageAmount: Math.ceil(coownerBasketCount / onePageLimit),
-    },
-  });
+    const ownerBaskets = await Basket.find({ ownerId: req.user._id });
+
+    const coownerBaskets = await (await Participants.find({ user: req.user._id }).populate('basket'))
+    .map((doc) => {
+        console.log(new Date(Date.parse(doc.basket.expirationDate) - Date.now()).getDate())
+        doc.basket.isHot = (new Date(Date.parse(doc.basket.expirationDate) - Date.now()).getDate() < 7);
+        return doc.basket;
+    });
+
+    const baskets = [...ownerBaskets, ...coownerBaskets];
+
+    res.status(200).json([...baskets])
 }
 
 async function getPublicBaskets(req, res, next) {
-  const { id } = req.user;
-  const { page, order } = req.query;
+    if(!req.user){
+        return next(new HttpError('A user is not logged in.', 401));
+    }
 
-  const bottomIndex = (page - 1) * onePageLimit;
+    const ownerBaskets = await Basket.find({ ownerId: req.user._id, isPublic: true });
 
-  const ownerBasketCount = await Basket.countDocuments({
-    ownerId: ObjectId(id),
-    isPublic: true,
-  });
-  const coownerBasketCount = await Participants.find({ user: ObjectId(id) })
-    .populate('basket')
-    .where('basket.isPublic')
-    .equals(true)
-    .countDocuments();
+    const coownerBaskets = await (await Participants.find({ user: req.user._id }).populate('basket'))
+    .map((doc) => {
+        console.log(new Date(Date.parse(doc.basket.expirationDate) - Date.now()).getDate())
+        doc.basket.isHot = (new Date(Date.parse(doc.basket.expirationDate) - Date.now()).getDate() < 7);
+        return doc.basket;
+    }).filter(basket => basket.isPublic === true);
 
-  const totalBasketCount = ownerBasketCount + coownerBasketCount;
+    const baskets = [...ownerBaskets, ...coownerBaskets];
 
-  const baskets = await Basket.aggregate([
-    { $match: { ownerId: ObjectId(id), isPublic: true } },
-    {
-      $unionWith: {
-        coll: 'participants',
-        pipeline: [
-          { $match: { user: ObjectId(id) } },
-          {
-            $lookup: {
-              from: 'baskets',
-              localField: 'basket',
-              foreignField: '_id',
-              as: 'basket',
-            },
-          },
-          { $replaceWith: { $first: '$basket' } },
-          { $match: { isPublic: true } },
-        ],
-      },
-    },
-    { $sort: getOrderArgs(order) },
-    { $skip: bottomIndex },
-    { $limit: onePageLimit },
-  ]);
-
-  res.status(200).json({
-    basketData: [...baskets],
-    paginationData: {
-      maxPageAmount: Math.ceil(totalBasketCount / onePageLimit),
-    },
-  });
+    res.status(200).json([...baskets])
 }
 
 async function getPrivateBaskets(req, res, next) {
-  const { id } = req.user;
-  const { page, order } = req.query;
+    if(!req.user){
+        return next(new HttpError('A user is not logged in.', 401));
+    }
 
-  const bottomIndex = (page - 1) * onePageLimit;
+    const ownerBaskets = await Basket.find({ ownerId: req.user._id, isPublic: false });
 
-  const ownerBasketCount = await Basket.countDocuments({
-    ownerId: ObjectId(id),
-    isPublic: false,
-  });
-  const coownerBasketCount = await Participants.find({ user: ObjectId(id) })
-    .populate('basket')
-    .where('basket.isPublic')
-    .equals(false)
-    .countDocuments();
-  const totalBasketCount = ownerBasketCount + coownerBasketCount;
+    const coownerBaskets = await (await Participants.find({ user: req.user._id }).populate('basket'))
+    .map((doc) => {
+        console.log(new Date(Date.parse(doc.basket.expirationDate) - Date.now()).getDate())
+        doc.basket.isHot = (new Date(Date.parse(doc.basket.expirationDate) - Date.now()).getDate() < 7);
+        return doc.basket;
+    }).filter(basket => basket.isPublic === false);
 
-  const baskets = await Basket.aggregate([
-    { $match: { ownerId: ObjectId(id), isPublic: false } },
-    {
-      $unionWith: {
-        coll: 'participants',
-        pipeline: [
-          { $match: { user: ObjectId(id) } },
-          {
-            $lookup: {
-              from: 'baskets',
-              localField: 'basket',
-              foreignField: '_id',
-              as: 'basket',
-            },
-          },
-          { $replaceWith: { $first: '$basket' } },
-          { $match: { isPublic: false } },
-        ],
-      },
-    },
-    { $sort: getOrderArgs(order) },
-    { $skip: bottomIndex },
-    { $limit: onePageLimit },
-  ]);
+    const baskets = [...ownerBaskets, ...coownerBaskets];
 
-  res.status(200).json({
-    basketData: [...baskets],
-    paginationData: {
-      maxPageAmount: Math.ceil(totalBasketCount / onePageLimit),
-    },
-  });
+    res.status(200).json([...baskets])
 }
+
 
 async function createBasket(req, res, next) {
-  const errors = validationResult(req);
+    const errors = validationResult(req);
 
-  if (!errors.isEmpty()) {
-    return next(new HttpError('Invalid or not all inputs passed.', 422));
-  }
+    if (!errors.isEmpty()) {
+        return next(new HttpError('Invalid or not all inputs passed.', 422));
+    }
 
-  let basket;
-  console.log(req.body);
-  // try{
-  //     basket = await Basket.create({
-  //         ownerId: req.user._id,
-  //         name: req.body.name,
-  //         description: req.body.description,
-  //         goal: req.body.goal,
-  //         value: 0,
-  //         expirationDate: req.body.expirationDate,
-  //         isPublic: req.body.isPublic,
-  //         creationDate: Date.now(),
-  //         image: req.body.image
-  //     })
-  // }
-  try {
-    basket = await Basket.create({
-      ownerId: req.user._id,
-      name: req.body.basketName,
-      description: req.body.description,
-      goal: req.body.moneyGoal,
-      value: 0,
-      expirationDate: req.body.expirationDate,
-      isPublic: req.body.isPublic,
-      creationDate: +new Date(),
-      // image: req.body.photoTag
-    });
-    console.log(basket);
-  } catch (error) {
-    return next(
-      new HttpError(
-        `Error when creating a basket appeared. Message: ${error.message}`,
-        500,
-      ),
-    );
-  }
+    if(!req.user){
+        return next(new HttpError('A user is not logged in.', 401));
+    }
 
-  res
-    .status(201)
-    .json({ id: basket._id, message: 'Successfully created a basket.' });
+    let basket;
+
+    try{
+        basket = await Basket.create({
+            ownerId: req.user._id,
+            name: req.body.name,
+            description: req.body.description,
+            goal: req.body.goal,
+            value: req.body.value,
+            expirationDate: req.body.expirationDate,
+            isPublic: req.body.isPublic,
+            creationDate: Date.now(),
+            image: req.body.image
+        })
+    }
+    catch (error){
+        return next(new HttpError(`Error when creating a basket appeared. Message: ${error.message}`, 500));
+    }
+
+    res.status(201).json({ id: basket._id, message: "Successfully created a basket." });
 }
 
-async function updateBasket(req, res, next) {}
+async function updateBasket(req, res, next) {
+
+}
 
 async function deleteBasket(req, res, next) {
-  //const id = req.params.id;
-  //const deleted = Basket.deleteOne({ _id: id })
+    const id = req.params.id;
+
+    const deleted = Basket.deleteOne({ _id: id })
+
 }
 
-async function shareBasket(req, res, next) {
-  const basket = await Basket.findOne({ _id: req.params.id });
-
-  const owner = await User.findOne({ _id: basket.ownerId });
-
-  try {
-    if (!basket._id) {
-      const error = new HttpError('Invalid basket link', 404);
-      return next(error);
-    }
-    res.render('index', {
-      basketName: basket.name,
-      description: basket.description,
-      accumulated: basket.value,
-      goal: basket.goal,
-      basketPhoto: basket.image,
-      userName: owner.firstName,
-      userPhoto: owner.userPhoto,
-    });
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-const getPublicBasket = async (req, res) => {
-  const basket = await Basket.findOne({ _id: req.params.id });
-  const owner = await User.findOne({ _id: basket.ownerId });
-
-  try {
-    if (!basket._id) {
-      const error = new HttpError('Invalid basket link', 404);
-      return next(error);
-    }
-
-    return res.status(201).json({ basketInfo: basket, ownerInfo: owner });
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-module.exports = {
-  getOwnerBaskets,
-  getCoownerBaskets,
-  getPublicBaskets,
-  getPrivateBaskets,
-  getPublicBasket,
-  createBasket,
-  updateBasket,
-  deleteBasket,
-  shareBasket,
-};
+module.exports = { getOwnerBaskets, getCoownerBaskets, getHotBaskets, getPublicBaskets, getPrivateBaskets, createBasket, updateBasket, deleteBasket }

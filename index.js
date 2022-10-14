@@ -22,6 +22,7 @@ const docsRoute = require('./routes/api-docs.routes');
 const payRoutes = require('./routes/payment.routes');
 const basketRoutes = require('./routes/basket.routes');
 const shareBasket = require('./routes/share-basket.routes');
+const publicRoutes = require('./routes/public.routes');
 
 const app = express();
 
@@ -38,10 +39,9 @@ app.set('views', './views');
 app.use(cors({ origin: APP_URL, credentials: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use(express.json({limit: "10mb", extended: true}))
+app.use(express.urlencoded({limit: "10mb", extended: true, parameterLimit: 50000}))
 app.use(morganMiddleware);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
@@ -50,6 +50,7 @@ app.use('/basket', shareBasket)
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/api_docs', docsRoute);
 app.use('/api/payment', payRoutes);
+app.use('/api/public', publicRoutes);
 
 // 404 Route should be at the end of all routes
 app.use((req, res, next) => {
