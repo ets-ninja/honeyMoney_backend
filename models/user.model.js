@@ -6,12 +6,15 @@ const Schema = mongoose.Schema;
 const userSchema = new Schema(
   {
     firstName: { type: String, required: true },
-    lastName: { type: String, required: true },
+    lastName: { type: String },
     publicName: { type: String },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    password: { type: String },
     userPhoto: { type: String, default: '' },
     stripeUserId: { type: String, required: true },
+    notificationTokens: [{ type: String, required: false, unique: true }],
+    connectedAccount: { type: String },
+    gift: { type: Boolean, required: true, default: false },
   },
   { timestamps: true },
 );

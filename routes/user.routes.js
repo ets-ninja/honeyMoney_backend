@@ -35,6 +35,7 @@ router.patch(
   ],
   userController.updateUser,
 );
+
 router.patch(
   '/update_password',
   [
@@ -44,9 +45,23 @@ router.patch(
   ],
   userController.updatePassword,
 );
-router.put('/update_photo', [
-  passport.authenticate('jwt', { session: false }),
-  check('userPhoto').not().isEmpty(),
-], userController.updateUserPhoto);
+
+router.put(
+  '/update_photo',
+  [
+    passport.authenticate('jwt', { session: false }),
+    check('userPhoto').not().isEmpty(),
+  ],
+  userController.updateUserPhoto,
+);
+
+router.post(
+  '/add_notification',
+  [
+    passport.authenticate('jwt', { session: false }),
+    check('notificationToken').not().isEmpty(),
+  ],
+  userController.addNotificationToken,
+);
 
 module.exports = router;
