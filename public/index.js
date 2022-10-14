@@ -14,8 +14,8 @@ const changeValue = e => {
     price = newValue;
     return;
   }
-  // const newPrice = e.target.value.match(/^(\d+([.,])?\d{0,2})$/g);
-  const newPrice = e.target.value.match(/(0|[1-9]\d*)([.]\d+)?/);
+  const newPrice = e.target.value.match(/^(\d+([.,])?\d{0,2})$/g);
+  // const newPrice = e.target.value.match(/(0|[1-9]\d*)([.]\d+)?/);
 
 
   if (newPrice !== null ) {
