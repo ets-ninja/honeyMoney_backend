@@ -24,4 +24,3 @@ const basketSchema = new Schema({
 })*/
 
 module.exports = mongoose.model('Basket', basketSchema);
-	
