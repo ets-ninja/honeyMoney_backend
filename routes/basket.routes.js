@@ -1,5 +1,4 @@
 const express = require('express');
-
 const { check } = require('express-validator');
 const passport = require('passport');
 const basketController = require('../controllers/basket.controllers');
@@ -49,6 +48,12 @@ router.put(
 router.delete(
   '/delete_basket/:id',
   basketController.deleteBasket,
+)
+
+router.get(
+  '/get_basket_by_id',
+  passport.authenticate('jwt', { session: false }),
+  basketController.getBasketById,
 )
 
 module.exports = router;

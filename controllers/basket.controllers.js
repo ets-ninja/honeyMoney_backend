@@ -1,4 +1,3 @@
-
 const { validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 const ObjectId = mongoose.Types.ObjectId;
@@ -7,12 +6,12 @@ const HttpError = require('../utils/http-error');
 const Basket = require('../models/basket.model');
 const Participants = require('../models/participant.model');
 
-const onePageLimit = 5;
+const onePageLimit = 12;
 
 const getOrderArgs = (order) => {
     switch(order) {
-        case "Newest to oldest": return { creationDate: -1, _id: 1 };
-        case "Oldest to newest": return { creationDate: 1, _id: 1 };
+        case "Newest to oldest": return { createdAt: -1, _id: 1 };
+        case "Oldest to newest": return { createdAt: 1, _id: 1 };
         case "Expensive to cheap": return { goal: -1, _id: 1 };
         case "Cheap to expensive": return { goal: 1, _id: 1 };
         case "Soon to expire": return { expirationDate: 1, _id: 1 };
@@ -175,7 +174,6 @@ async function createBasket(req, res, next) {
     }
 
     let basket;
-    console.log(req.body);
     try{
         basket = await Basket.create({
             ownerId: req.user._id,
@@ -188,7 +186,6 @@ async function createBasket(req, res, next) {
             creationDate: +new Date(),
             image: req.body.photoTag
         })
-        console.log(basket);
     }
     catch (error){
         return next(new HttpError(`Error when creating a basket appeared. Message: ${error.message}`, 500));
@@ -208,6 +205,20 @@ async function deleteBasket(req, res, next) {
 
 } 
 
+async function getBasketById(req, res, next) {
+    const { id } = req.query;
+    
+    let basket = {};
+
+    try{
+        basket = await Basket.findById(id).populate('ownerId');
+    } catch (err){
+        return next(new HttpError(`No basket with ${id} id exists`, 500));
+    }
+
+    res.status(200).json({ basket: basket });
+}
+
 module.exports = { 
     getOwnerBaskets, 
     getCoownerBaskets, 
@@ -215,5 +226,6 @@ module.exports = {
     getPrivateBaskets, 
     createBasket,
     updateBasket, 
-    deleteBasket 
+    deleteBasket,
+    getBasketById 
 }

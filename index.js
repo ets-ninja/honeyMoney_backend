@@ -18,8 +18,8 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const wishlistRoutes = require('./routes/wishlist.routes');
 const docsRoute = require('./routes/api-docs.routes');
+const basketRoutes = require('./routes/basket.routes');
 const payRoutes = require('./routes/payment.routes');
-const basketRoutes = require('./routes/basket.routes')
 
 const app = express();
 
