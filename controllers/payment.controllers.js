@@ -133,8 +133,27 @@ async function sendMoneyToBasket(req, res, next) {
   const { id } = req.user;
   const { paymentIntentId, basketId } = req.body;
 
-  const basket = await Basket.findOne({ _id: basketId });
-  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+  let basket;
+  try{
+    basket = await Basket.findOne({ _id: basketId });
+  }catch(err){
+    const error = new HttpError(
+      'Could find basket. Please try again later',
+      500,
+    );
+    return next(error);
+  }
+
+  let paymentIntent;
+  try{
+    paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+  }catch(err){
+    const error = new HttpError(
+      'Could find payment. Please try again later',
+      500,
+    );
+    return next(error);
+  }
 
   // send money to basket
   try {
@@ -150,6 +169,14 @@ async function sendMoneyToBasket(req, res, next) {
     );
     return next(error);
   }
+  
+// change basket value
+// let value = paymentIntent.amount 
+// try{
+//     basket.value += 
+// }catch(err){
+
+// }
 
   // custom transaction
   try {
@@ -163,13 +190,13 @@ async function sendMoneyToBasket(req, res, next) {
     });
     await newTransaction.save();
   } catch (err) {
-    console.log(err);
     const error = new HttpError(
       'Could not create transactions. Please try again later',
       500,
     );
     return next(error);
   }
+
   res.status(201).json({ mes: 'Donate successful' });
 }
 
