@@ -167,34 +167,36 @@ async function getPrivateBaskets(req, res, next) {
         })
 }
 
-
 async function createBasket(req, res, next) {
-    const errors = validationResult(req);
+  const errors = validationResult(req);
 
-    if (!errors.isEmpty()) {
-        return next(new HttpError('Invalid or not all inputs passed.', 422));
-    }
+  if (!errors.isEmpty()) {
+    return next(new HttpError('Invalid or not all inputs passed.', 422));
+  }
 
-    let basket;
-
-    try{
-        basket = await Basket.create({
-            ownerId: req.user._id,
-            name: req.body.name,
-            description: req.body.description,
-            goal: req.body.goal,
-            value: 0,
-            expirationDate: req.body.expirationDate,
-            isPublic: req.body.isPublic,
-            creationDate: Date.now(),
-            image: req.body.image
-        })
-    }
-    catch (error){
-        return next(new HttpError(`Error when creating a basket appeared. Message: ${error.message}`, 500));
-    }
-
-    res.status(201).json({ id: basket._id, message: "Successfully created a basket." });
+  try {
+    const basket = await Basket.create({
+      ownerId: req.user._id,
+      name: req.body.name,
+      description: req.body.description,
+      goal: req.body.goal,
+      value: 0,
+      expirationDate: req.body.expirationDate,
+      isPublic: req.body.isPublic,
+      creationDate: Date.now(),
+      image: req.body.image,
+    });
+    res
+      .status(201)
+      .json({ id: basket._id, message: 'Successfully created a basket.' });
+  } catch (error) {
+    return next(
+      new HttpError(
+        `Error when creating a basket appeared. Message: ${error.message}`,
+        500,
+      ),
+    );
+  }
 }
 
 async function updateBasket(req, res, next) {

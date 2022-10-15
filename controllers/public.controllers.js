@@ -23,6 +23,25 @@ const getPaginationSettings = (req, jarsCount) => {
   return { jarsPerPage, pageCount, skip };
 };
 
+const getSortSettings = order => {
+  switch (order) {
+    case 'Newest to oldest':
+      return { createdAt: -1, _id: 1 };
+    case 'Oldest to newest':
+      return { createdAt: 1, _id: 1 };
+    case 'Expensive to cheap':
+      return { goal: -1, _id: 1 };
+    case 'Cheap to expensive':
+      return { goal: 1, _id: 1 };
+    case 'Soon to expire':
+      return { expirationDate: 1, _id: 1 };
+    case 'Far to expire':
+      return { expirationDate: -1, _id: 1 };
+    default:
+      return { createdAt: -1, _id: 1 };
+  }
+};
+
 const lookupAndUnwind = [
   {
     $lookup: {
@@ -37,6 +56,7 @@ const lookupAndUnwind = [
 
 async function getPublicJars(req, res, next) {
   const userId = req.user?._id;
+  const sort = getSortSettings(req?.query?.sort);
 
   try {
     const excludeParticpants = await getParticipantsIds(userId);
@@ -63,6 +83,7 @@ async function getPublicJars(req, res, next) {
 
     const jarsWithUser = await Basket.aggregate([
       matchStage,
+      { $sort: sort },
       { $skip: skip },
       { $limit: jarsPerPage },
       ...lookupAndUnwind,
@@ -83,6 +104,7 @@ async function getPublicJars(req, res, next) {
 async function getJarsByFilter(req, res, next) {
   const userId = req.user?._id;
   const { filterQuery } = req.query;
+  const sort = getSortSettings(req.query?.sort);
 
   try {
     const matchedUsers = await User.find({
@@ -148,6 +170,7 @@ async function getJarsByFilter(req, res, next) {
           ],
         },
       },
+      { $sort: sort },
       { $skip: skip },
       { $limit: jarsPerPage },
       ...lookupAndUnwind,
@@ -169,6 +192,7 @@ async function getJarsByFilter(req, res, next) {
 async function getUserJars(req, res, next) {
   const userId = req.user?._id;
   const { userToFind } = req.query;
+  const sort = getSortSettings(req.query?.sort);
 
   try {
     const excludeParticpants = await getParticipantsIds(userId);
@@ -195,6 +219,7 @@ async function getUserJars(req, res, next) {
 
     const jarsWithUser = await Basket.aggregate([
       matchStage,
+      { $sort: sort },
       { $skip: skip },
       { $limit: jarsPerPage },
       ...lookupAndUnwind,
