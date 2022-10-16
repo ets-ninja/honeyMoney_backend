@@ -32,7 +32,6 @@ const User = require('../models/user.model');
 async function getCustomerBalance(req, res, next) {
   const { stripeUserId } = req.user;
 
-  console.log(req);
   let balance;
   try {
     const customer = await stripe.customers.retrieve(stripeUserId);
@@ -327,7 +326,27 @@ async function receiveMoney(req, res, next) {
 }
 
 async function createConnectedAccount(req, res, next) {
-  const { reauthLink, returnLink } = req.body;
+    const { id } = req.user
+
+    let currentUser;
+  try{
+    currentUser = await User.findOne({_id: id})
+  }catch(err){
+    const error = new HttpError(
+      'Could not create an account. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
+  if(currentUser.connectedAccount){
+    const error = new HttpError(
+      'You already have an account',
+      500,
+    );
+    return next(error);
+ }
+
   let connectedAccount;
   try {
     connectedAccount = await stripe.accounts.create({
@@ -352,10 +371,11 @@ async function createConnectedAccount(req, res, next) {
   try {
     accountLink = await stripe.accountLinks.create({
       account: connectedAccount.id,
-      refresh_url: reauthLink, //redirect if link is expired
-      return_url: returnLink, //redirect after completing flow
+      refresh_url: `${process.env.APP_URL}/profile`, //redirect if link is expired
+      return_url: `${process.env.APP_URL}/profile`, //redirect after completing flow
       type: 'account_onboarding',
     });
+    console.log(accountLink)
   } catch (err) {
     const error = new HttpError(
       'Could not register you now. Please try again later.',
@@ -363,7 +383,7 @@ async function createConnectedAccount(req, res, next) {
     );
     return next(error);
   }
-  res.status(200).json(accountLink);
+  res.status(200).json(accountLink.url);
 }
 
 module.exports = {
