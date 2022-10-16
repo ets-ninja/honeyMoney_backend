@@ -48,6 +48,9 @@ const lookupAndUnwind = [
       from: 'users',
       localField: 'ownerId',
       foreignField: '_id',
+      pipeline: [
+        { $project: { email: 0, password: 0, firstName: 0, lastName: 0 } },
+      ],
       as: 'user',
     },
   },
