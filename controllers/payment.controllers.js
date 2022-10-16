@@ -203,12 +203,18 @@ async function sendMoneyToBasket(req, res, next) {
   }
   
 // change basket value
-// let value = paymentIntent.amount 
-// try{
-//     basket.value += 
-// }catch(err){
+    let value = paymentIntent.amount/100; 
+    try{
+        basket.value += value;
+        await basket.save();
+    }catch(err){
+        const error = new HttpError(
+          'Could not create transactions. Please try again later',
+          500,
+        );
+        return next(error);
+    }
 
-// }
 
   // custom transaction
   try {
