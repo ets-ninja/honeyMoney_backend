@@ -19,6 +19,9 @@ const {
 const {
   getConnectedCard,
 } = require('../services/stripe/get-connected-account.services');
+const {
+  createRefund,
+} = require('../services/stripe/transactions/stripe/create-refund.service');
 
 // entities
 const Transaction = require('../models/transaction.model');
@@ -29,7 +32,7 @@ const User = require('../models/user.model');
 async function getCustomerBalance(req, res, next) {
   const { stripeUserId } = req.user;
 
-  console.log(req)
+  console.log(req);
   let balance;
   try {
     const customer = await stripe.customers.retrieve(stripeUserId);
@@ -104,12 +107,11 @@ async function newPaymentIntent(req, res, next) {
   const { amount, description, last4 } = req.body;
 
   let paymentMethods;
-  try{
-    paymentMethods = await stripe.customers.listPaymentMethods(
-      stripeUserId,
-      {type: 'card'}
-    );
-  }catch(err){
+  try {
+    paymentMethods = await stripe.customers.listPaymentMethods(stripeUserId, {
+      type: 'card',
+    });
+  } catch (err) {
     console.log(err);
     const error = new HttpError(
       'Could not find your card. Please try again later',
@@ -117,20 +119,20 @@ async function newPaymentIntent(req, res, next) {
     );
     return next(error);
   }
-  
+
   let paymentMethod;
-  for(let i = 0; i < paymentMethods.data.length; i++){
-    if(paymentMethods.data[i].card.last4 == last4){
-        paymentMethod = paymentMethods.data[i].id
+  for (let i = 0; i < paymentMethods.data.length; i++) {
+    if (paymentMethods.data[i].card.last4 == last4) {
+      paymentMethod = paymentMethods.data[i].id;
     }
   }
-  if(!paymentMethod){
-      const error = new HttpError(
-        "You don't have a card with this number. Please try again later",
-        500,
-      );
-      return next(error);
-   }
+  if (!paymentMethod) {
+    const error = new HttpError(
+      "You don't have a card with this number. Please try again later",
+      500,
+    );
+    return next(error);
+  }
 
   let payment_secret = {};
   try {
@@ -166,9 +168,10 @@ async function sendMoneyToBasket(req, res, next) {
   const { paymentIntentId, basketId } = req.body;
 
   let basket;
-  try{
+  try {
     basket = await Basket.findOne({ _id: basketId });
-  }catch(err){
+  } catch (err) {
+    createRefund({paymentIntentId})
     const error = new HttpError(
       'Could find basket. Please try again later',
       500,
@@ -177,9 +180,10 @@ async function sendMoneyToBasket(req, res, next) {
   }
 
   let paymentIntent;
-  try{
+  try {
     paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-  }catch(err){
+  } catch (err) {
+    createRefund({paymentIntentId})
     const error = new HttpError(
       'Could find payment. Please try again later',
       500,
@@ -195,26 +199,27 @@ async function sendMoneyToBasket(req, res, next) {
       description: paymentIntentId.description,
     });
   } catch (err) {
+    createRefund({paymentIntentId})
     const error = new HttpError(
       'Could not create transactions. Please try again later',
       500,
     );
     return next(error);
   }
-  
-// change basket value
-    let value = paymentIntent.amount/100; 
-    try{
-        basket.value += value;
-        await basket.save();
-    }catch(err){
-        const error = new HttpError(
-          'Could not create transactions. Please try again later',
-          500,
-        );
-        return next(error);
-    }
 
+  // change basket value
+  let value = paymentIntent.amount / 100;
+  try {
+    basket.value += value;
+    await basket.save();
+  } catch (err) {
+    createRefund({paymentIntentId})
+    const error = new HttpError(
+      'Could not create transactions. Please try again later',
+      500,
+    );
+    return next(error);
+  }
 
   // custom transaction
   try {
@@ -228,6 +233,7 @@ async function sendMoneyToBasket(req, res, next) {
     });
     await newTransaction.save();
   } catch (err) {
+    createRefund({paymentIntentId})
     const error = new HttpError(
       'Could not create transactions. Please try again later',
       500,
