@@ -28,6 +28,8 @@ const User = require('../models/user.model');
 // get customer balance
 async function getCustomerBalance(req, res, next) {
   const { stripeUserId } = req.user;
+
+  console.log(req)
   let balance;
   try {
     const customer = await stripe.customers.retrieve(stripeUserId);
@@ -99,7 +101,37 @@ async function newSetupIntent(req, res, next) {
 // payment from customer - one payment session - "donate" button
 async function newPaymentIntent(req, res, next) {
   const { stripeUserId, email } = req.user;
-  const { amount, description, paymentMethod } = req.body;
+  const { amount, description, last4 } = req.body;
+
+  let paymentMethods;
+  try{
+    paymentMethods = await stripe.customers.listPaymentMethods(
+      stripeUserId,
+      {type: 'card'}
+    );
+  }catch(err){
+    console.log(err);
+    const error = new HttpError(
+      'Could not find your card. Please try again later',
+      500,
+    );
+    return next(error);
+  }
+  
+  let paymentMethod;
+  for(let i = 0; i < paymentMethods.data.length; i++){
+    if(paymentMethods.data[i].card.last4 == last4){
+        paymentMethod = paymentMethods.data[i].id
+    }
+  }
+  if(!paymentMethod){
+      const error = new HttpError(
+        "You don't have a card with this number. Please try again later",
+        500,
+      );
+      return next(error);
+   }
+
   let payment_secret = {};
   try {
     const paymentIntent = await stripe.paymentIntents.create({
