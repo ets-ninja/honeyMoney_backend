@@ -54,6 +54,19 @@ const lookupAndUnwind = [
       as: 'user',
     },
   },
+  {
+    $lookup: {
+      from: 'transactions',
+      localField: '_id',
+      foreignField: 'basketId',
+      pipeline: [
+        { $match: { status: 'succeeded' } },
+        { $sort: { createdAt: -1 } },
+        { $project: { createdAt: 1, comment: 1 } },
+      ],
+      as: 'transactions',
+    },
+  },
   { $unwind: '$user' },
 ];
 
