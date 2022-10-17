@@ -178,7 +178,7 @@ async function createBasket(req, res, next) {
 
     let stripeId;
     try{
-        stripeId = await createCustomer({ email:'', firstName: req.body.name, lastName: 'Basket' })
+        stripeId = await createCustomer({ email:'', firstName: req.body.basketName, lastName: 'Basket' })
     }catch(err){
         return next(new HttpError(`Error when creating a basket appeared. Message: ${err.message}`, 500));
     }
