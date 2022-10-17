@@ -7,12 +7,12 @@ admin.initializeApp({
   databaseURL: process.env.FIREBASE_DATABASE_URL,
 });
 
-const sendMessage = async (userTokens, data, notification) => {
+const sendMessage = async (tokens, data, notification) => {
   try {
     await admin.messaging().sendMulticast({
       data,
       notification,
-      tokens: userTokens,
+      tokens,
     });
   } catch (error) {
     throw new Error(error.message);

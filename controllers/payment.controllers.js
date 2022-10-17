@@ -243,16 +243,19 @@ async function sendMoneyToBasket(req, res, next) {
     return next(error);
   }
 
-  const owner = await User.findOne({ _id: basket.ownerId });
+  let owner;
+  try {
+    owner = await User.findOne({ _id: basket.ownerId });
+  } catch (error) {
+    logger.error('Cant send Notification');
+  }
 
-  if (owner.notificationTokens) {
+  if (owner?.notificationTokens) {
     try {
       await sendMessage(
         owner.notificationTokens,
         {
-          title: 'Hello',
-          body: 'World',
-          clickAction: `http://localhost:3000/basket/${basketId}`,
+          clickAction: `${process.env.APP_URL}/basket/${basketId}`,
         },
         {
           title: `${firstName} ${lastName}`,
