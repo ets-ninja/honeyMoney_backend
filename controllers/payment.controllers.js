@@ -22,7 +22,7 @@ const {
 
 // entities
 const Transaction = require('../models/transaction.model');
-const Basket = require('../models/basket.model');
+const Jar = require('../models/jar.model');
 const User = require('../models/user.model');
 
 // get customer balance
@@ -133,7 +133,7 @@ async function sendMoneyToBasket(req, res, next) {
   const { id } = req.user;
   const { paymentIntentId, basketId } = req.body;
 
-  const basket = await Basket.findOne({ _id: basketId });
+  const basket = await Jar.findOne({ _id: basketId });
   const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
   // send money to basket
@@ -194,7 +194,7 @@ async function receiveMoney(req, res, next) {
     const { id, connectedAccount } = req.user;
     const { basketId, basket_name } = req.body;
 
-    const basket = await Basket.findOne({ balance_id: basketId });
+    const basket = await Jar.findOne({ balance_id: basketId });
     // some verification
     if (id !== basket.ownerId) {
       const error = new HttpError(

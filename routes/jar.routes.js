@@ -1,32 +1,32 @@
 const express = require('express');
-const { check } = require('express-validator');
+const { check, oneOf } = require('express-validator');
 const passport = require('passport');
-const basketController = require('../controllers/basket.controllers');
+const jarController = require('../controllers/jar.controllers');
 
 const router = express.Router();
 
 router.get(
-  '/get_owner_baskets',
+  '/get_owner_jars',
   passport.authenticate('jwt', { session: false }),
-  basketController.getOwnerBaskets,
+  jarController.getOwnerJars,
 );
 
 router.get(
-  '/get_coowner_baskets',
+  '/get_coowner_jars',
   passport.authenticate('jwt', { session: false }),
-  basketController.getCoownerBaskets,
+  jarController.getCoownerJars,
 );
 
 router.get(
-  '/get_public_baskets',
+  '/get_public_jars',
   passport.authenticate('jwt', { session: false }),
-  basketController.getPublicBaskets,
+  jarController.getPublicJars,
 );
 
 router.get(
-  '/get_private_baskets',
+  '/get_private_jars',
   passport.authenticate('jwt', { session: false }),
-  basketController.getPrivateBaskets,
+  jarController.getPrivateJars,
 );
 
 router.post(
@@ -39,23 +39,31 @@ router.post(
     check('isPublic').not().isEmpty(),
     check('image').not().isEmpty(),
   ],
-  basketController.createBasket,
+  jarController.createBasket,
 );
 
 router.put(
-  '/update_basket/:id',
-  basketController.updateBasket,
+  '/update_jar/:id',
+  [
+    //passport.authenticate('jwt', { session: false }),
+    oneOf([
+      check('name').not().isEmpty(),
+      check('expirationDate').not().isEmpty(),
+      check('description').not().isEmpty(),
+    ]),
+  ],
+  jarController.updateJar,
 )
 
 router.delete(
-  '/delete_basket/:id',
-  basketController.deleteBasket,
+  '/delete_jar/:id',
+  jarController.deleteJar,
 )
 
 router.get(
-  '/get_basket_by_id',
+  '/get_jar_by_id',
   passport.authenticate('jwt', { session: false }),
-  basketController.getBasketById,
+  jarController.getJarById,
 )
 
 module.exports = router;

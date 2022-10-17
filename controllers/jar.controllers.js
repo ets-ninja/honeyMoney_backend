@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const ObjectId = mongoose.Types.ObjectId;
 const HttpError = require('../utils/http-error');
 
-const Basket = require('../models/basket.model');
+const Jar = require('../models/jar.model');
 const Participants = require('../models/participant.model');
 
 const onePageLimit = 12;
@@ -20,35 +20,43 @@ const getOrderArgs = (order) => {
     return '';
 }
 
-async function getOwnerBaskets(req, res, next) {
+async function getOwnerJars(req, res, next) {
     const { id } = req.user;
     const { page, order } = req.query;
     
     const bottomIndex = (page - 1) * onePageLimit;
 
-    const ownerBasketCount = await Basket.countDocuments({ ownerId: ObjectId(id) });
+    const ownerJarCount = await Jar.countDocuments({ ownerId: ObjectId(id) });
 
-    const baskets = await Basket
+    let jars;
+    try {
+      jars = await Jar
         .find({ ownerId: id })
         .sort(getOrderArgs(order))
         .skip(bottomIndex)
         .limit(onePageLimit);
+    } catch(error){
+        const err = new HttpError(`Error with recieving jars. Message: ${error.message}`, 500);
+        return next(err);
+    }
 
     res.status(200).json({
-        basketData: [...baskets], 
-        paginationData: { maxPageAmount: Math.ceil(ownerBasketCount / onePageLimit) }
+        basketData: [...jars], 
+        paginationData: { maxPageAmount: Math.ceil(ownerJarCount / onePageLimit) }
     });
 }
 
-async function getCoownerBaskets(req, res, next) {
+async function getCoownerJars(req, res, next) {
     const { id } = req.user;
     const { page, order } = req.query;
 
     const bottomIndex = (page - 1) * onePageLimit;
 
-    const coownerBasketCount = await Participants.countDocuments({ user: ObjectId(id) });
+    const coownerJarCount = await Participants.countDocuments({ user: ObjectId(id) });
 
-    const baskets = await Participants.aggregate([
+    let jars;
+    try{
+        jars = await Participants.aggregate([
         { $match: { user: ObjectId(id) } },
         { $lookup: 
             { 
@@ -62,31 +70,36 @@ async function getCoownerBaskets(req, res, next) {
         { $sort: getOrderArgs(order) },
         { $skip: bottomIndex },
         { $limit: onePageLimit }
-    ])
+      ])
+    } catch (error) {
+        return next(error);
+    }
     
     res.status(200).json({
-        basketData: [...baskets], 
-        paginationData: { maxPageAmount: Math.ceil(coownerBasketCount / onePageLimit) }
+        basketData: [...jars], 
+        paginationData: { maxPageAmount: Math.ceil(coownerJarCount / onePageLimit) }
     });
 }
 
-async function getPublicBaskets(req, res, next) {
+async function getPublicJars(req, res, next) {
     const { id } = req.user;
     const { page, order } = req.query;
 
     const bottomIndex = (page - 1) * onePageLimit;
     
-    const ownerBasketCount = await Basket.countDocuments({ ownerId: ObjectId(id), isPublic: true });
-    const coownerBasketCount = await 
+    const ownerJarCount = await Jar.countDocuments({ ownerId: ObjectId(id), isPublic: true });
+    const coownerJarCount = await 
         Participants.find({ user: ObjectId(id) })
         .populate('basket')
         .where('basket.isPublic')
         .equals(true)
         .countDocuments();
 
-    const totalBasketCount = ownerBasketCount + coownerBasketCount;
+    const totalJarCount = ownerJarCount + coownerJarCount;
 
-    const baskets = await Basket.aggregate([
+    let jars;
+    try {
+        jars = await Jar.aggregate([
         { $match: { ownerId: ObjectId(id), isPublic: true } },
         { 
             $unionWith: { 
@@ -109,31 +122,36 @@ async function getPublicBaskets(req, res, next) {
         { $sort: getOrderArgs(order) },
         { $skip: bottomIndex },
         { $limit: onePageLimit }
-    ])
+      ])
+    } catch (error){
+        return next(error);
+    }
 
     res.status(200)
         .json({
-            basketData : [...baskets], 
-            paginationData: { maxPageAmount: Math.ceil(totalBasketCount / onePageLimit)}
+            basketData : [...jars], 
+            paginationData: { maxPageAmount: Math.ceil(totalJarCount / onePageLimit)}
         })
 }
 
-async function getPrivateBaskets(req, res, next) {
+async function getPrivateJars(req, res, next) {
     const { id } = req.user;
     const { page, order } = req.query;
 
     const bottomIndex = (page - 1) * onePageLimit;
     
-    const ownerBasketCount = await Basket.countDocuments({ ownerId: ObjectId(id), isPublic: false });
-    const coownerBasketCount = await 
+    const ownerJarCount = await Jar.countDocuments({ ownerId: ObjectId(id), isPublic: false });
+    const coownerJarCount = await 
         Participants.find({ user: ObjectId(id) })
         .populate('basket')
         .where('basket.isPublic')
         .equals(false)
         .countDocuments();
-    const totalBasketCount = ownerBasketCount + coownerBasketCount;
+    const totalJarCount = ownerJarCount + coownerJarCount;
 
-    const baskets = await Basket.aggregate([
+    let jars;
+    try {
+        jars = await Jar.aggregate([
         { $match: { ownerId: ObjectId(id), isPublic: false } },
         { 
             $unionWith: { 
@@ -156,12 +174,15 @@ async function getPrivateBaskets(req, res, next) {
         { $sort: getOrderArgs(order) },
         { $skip: bottomIndex },
         { $limit: onePageLimit }
-    ])
+      ])
+    } catch (error) {
+        return next(error);
+    }
 
     res.status(200)
         .json({
-            basketData : [...baskets], 
-            paginationData: { maxPageAmount: Math.ceil(totalBasketCount / onePageLimit)} 
+            basketData : [...jars], 
+            paginationData: { maxPageAmount: Math.ceil(totalJarCount / onePageLimit)} 
         })
 }
 
@@ -176,7 +197,7 @@ async function createBasket(req, res, next) {
     let basket;
 
     try{
-        basket = await Basket.create({
+        basket = await Jar.create({
             ownerId: req.user._id,
             name: req.body.name,
             description: req.body.description,
@@ -195,38 +216,71 @@ async function createBasket(req, res, next) {
     res.status(201).json({ id: basket._id, message: "Successfully created a basket." });
 }
 
-async function updateBasket(req, res, next) {
+async function updateJar(req, res, next) {
+    const errors = validationResult(req);
 
+    if (!errors.isEmpty()) {
+        return next(new HttpError('Invalid inputs passed.', 422));
+    }
+
+    const { id } = req.params;
+    const { name, expirationDate, description } = req.body;
+
+    const updatedJar = {
+        ...(name && { name }),
+        ...(expirationDate && { expirationDate }),
+        ...(description && { description }),
+    }
+
+    let existingJar;
+    try {
+        existingJar = await Jar.findOneAndUpdate(
+        { _id: id },
+        updatedJar,
+        { new: true },
+      );
+    } catch (err) {
+      const error = new HttpError(
+        'Updating failed, please try again later.',
+        500,
+      );
+      return next(error);
+    }
+  
+    res.status(200).json({
+      basketId: existingJar.id,
+      message: 'Jar data updated',
+    });
 }
 
-async function deleteBasket(req, res, next) {
+async function deleteJar(req, res, next) {
     //const id = req.params.id;
 
     //const deleted = Basket.deleteOne({ _id: id })
 
 } 
 
-async function getBasketById(req, res, next) {
+async function getJarById(req, res, next) {
     const { id } = req.query;
     
-    let basket = {};
+    let jar = {};
 
     try{
-        basket = await Basket.findById(id).populate('ownerId');
+        jar = await Jar.findById(id).populate('ownerId');
     } catch (err){
-        return next(new HttpError(`No basket with ${id} id exists`, 500));
+        return next(new HttpError(`No jar with ${id} id exists`, 500));
     }
 
-    res.status(200).json({ basket: basket });
+    res.status(200).json({ basket: jar });
 }
 
 module.exports = { 
-    getOwnerBaskets, 
-    getCoownerBaskets, 
-    getPublicBaskets, 
-    getPrivateBaskets, 
+    getOwnerJars, 
+    getCoownerJars, 
+    getPublicJars, 
+    getPrivateJars, 
     createBasket,
-    updateBasket, 
-    deleteBasket,
-    getBasketById 
+    updateJar, 
+    deleteJar,
+    getJarById 
 }
