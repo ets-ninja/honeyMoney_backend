@@ -14,7 +14,7 @@ const basketSchema = new Schema({
   // creationDate: { type: Date, required: true },
   creationDate: { type: Number, required: true },
   image: { type: String },
-  stripeId: {type: String, required: true }
+  stripeId: { type: String, required: true },
 });
 /*.plugin(function(schema, options) {
     schema.pre('save', function(next) {

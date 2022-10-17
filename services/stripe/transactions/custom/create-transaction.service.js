@@ -1,8 +1,13 @@
 const Transaction = require('../../../../models/transaction.model');
 
-
-async function createTransaction({basketId, userId, stripeId, amount, comment, card}) 
-{
+async function createTransaction({
+  basketId,
+  userId,
+  stripeId,
+  amount,
+  comment,
+  card,
+}) {
   const transaction = new Transaction({
     basketId,
     userId,
