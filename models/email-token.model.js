@@ -1,16 +1,17 @@
 const mongoose = require('mongoose');
-const { RESTORE_PASSWORD_EXPIRE } = require('../constants');
+const { EMAIL_EXPIRE } = require('../constants');
 
 const Schema = mongoose.Schema;
 
-const resetTokenSchema = new Schema({
+// Token for restore password / confirm email
+const emailTokenSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
   token: { type: String, required: true },
   createdAt: {
     type: Date,
-    expires: RESTORE_PASSWORD_EXPIRE,
+    expires: EMAIL_EXPIRE,
     default: Date.now,
   },
 });
 
-module.exports = mongoose.model('ResetToken', resetTokenSchema);
+module.exports = mongoose.model('EmailToken', emailTokenSchema);
