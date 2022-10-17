@@ -20,6 +20,7 @@ const wishlistRoutes = require('./routes/wishlist.routes');
 const docsRoute = require('./routes/api-docs.routes');
 const basketRoutes = require('./routes/basket.routes');
 const payRoutes = require('./routes/payment.routes');
+const publicRoutes = require('./routes/public.routes');
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use('/api/basket', basketRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/api_docs', docsRoute);
 app.use('/api/payment', payRoutes);
+app.use('/api/public', publicRoutes);
 
 // 404 Route should be at the end of all routes
 app.use((req, res, next) => {
