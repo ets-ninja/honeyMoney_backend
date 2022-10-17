@@ -1,4 +1,5 @@
 const { validationResult } = require('express-validator');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const HttpError = require('../utils/http-error');
 const {
@@ -7,12 +8,14 @@ const {
 } = require('../utils/authenticate.helpers');
 
 // Constants
-const { ERR, REFRESH_COOKIE_NAME } = require('../constants');
+const { ERR, REFRESH_COOKIE_NAME, USER_STATUS } = require('../constants');
 
 // Models
 const User = require('../models/user.model');
+const ConfirmEmailToken = require('../models/email-token.model');
 
 // Services
+const sendConfirmEmailMessage = require('../services/email/messages/confirmEmail');
 const {
   createCustomer,
 } = require('../services/stripe/create-customer.service');
@@ -21,34 +24,14 @@ const {
 } = require('../services/stripe/transactions/stripe/change-balance.service');
 
 async function getUserDetails(req, res) {
-  const {
-    firstName,
-    lastName,
-    publicName,
-    email,
-    createdAt,
-    id,
-    userPhoto,
-    notificationTokens,
-  } = req.user;
-
-  res.status(200).json({
-    firstName,
-    lastName,
-    publicName,
-    email,
-    createdAt,
-    id,
-    userPhoto,
-    notificationTokens,
-  });
+  res.status(200).json(req.user.toObject({ getters: true }));
 }
 
 async function createUser(req, res, next) {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    return next(new HttpError('Invalid inputs passed.', 422));
+    return next(ERR.INVALID_DATA);
   }
 
   const { firstName, lastName, publicName, email, password } = req.body;
@@ -79,6 +62,86 @@ async function createUser(req, res, next) {
     return next(error);
   }
 
+  const createdUser = new User({
+    firstName,
+    lastName,
+    publicName,
+    email,
+    password: hashedPassword,
+  });
+
+  try {
+    await createdUser.save();
+  } catch (err) {
+    const error = new HttpError('Signing up failed, please try again.', 500);
+    return next(error);
+  }
+
+  const code = crypto.randomBytes(4).toString('hex');
+  const hash = await bcrypt.hash(code, 12);
+
+  try {
+    await new ConfirmEmailToken({
+      userId: createdUser.id,
+      token: hash,
+    }).save();
+  } catch (err) {
+    return next(ERR.DB_FAILURE);
+  }
+
+  try {
+    await sendConfirmEmailMessage(email, {
+      username: firstName,
+      code,
+    });
+  } catch (err) {
+    return next(new HttpError('Sending email failed, please try again', 500));
+  }
+
+  res.status(201).json({
+    user: createdUser.toObject({ getters: true }),
+    message: 'Email with confirmation code sent',
+  });
+}
+
+async function confirmUserEmail(req, res, next) {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return next(ERR.INVALID_DATA);
+  }
+
+  const { userId, code } = req.body;
+
+  let savedCode;
+  try {
+    savedCode = await ConfirmEmailToken.findOne({
+      userId,
+    });
+  } catch (err) {
+    return next(ERR.DB_FAILURE);
+  }
+
+  if (!savedCode) {
+    return next(new HttpError('Code is expired', 404));
+  }
+
+  const isValidCode = await bcrypt.compare(code, savedCode.token);
+
+  if (!isValidCode) {
+    return next(new HttpError('Code is invalid', 403));
+  }
+
+  let user;
+  try {
+    user = await User.findOne({
+      _id: userId,
+    });
+  } catch (err) {
+    return next(ERR.DB_FAILURE);
+  }
+
+  const { email, firstName, lastName } = user;
   let stripeUserId;
   try {
     stripeUserId = await createCustomer({ email, firstName, lastName });
@@ -97,7 +160,6 @@ async function createUser(req, res, next) {
       amount: '-100',
       description: 'Gift for create account',
     });
-    console.log(stripeUserId);
     if (transaction) {
       gift = true;
     }
@@ -109,34 +171,26 @@ async function createUser(req, res, next) {
     return next(error);
   }
 
-  const createdUser = new User({
-    firstName,
-    lastName,
-    publicName,
-    email,
-    password: hashedPassword,
-    stripeUserId,
-    notificationTokens: [],
-    gift,
-  });
+  user.status = USER_STATUS.ACTIVE;
+  user.stripeUserId = stripeUserId;
+  user.gift = gift;
 
   try {
-    await createdUser.save();
+    await user.save();
   } catch (err) {
-    const error = new HttpError('Signing up failed, please try again.', 500);
-    return next(error);
+    return next(ERR.DB_FAILURE);
   }
 
   let token;
   try {
-    token = signToken(createdUser.id);
+    token = signToken(user.id);
   } catch (err) {
     return next(err);
   }
 
   let refreshToken;
   try {
-    refreshToken = signRefreshToken(createdUser.id);
+    refreshToken = signRefreshToken(user.id);
   } catch (err) {
     return next(err);
   }
@@ -145,9 +199,56 @@ async function createUser(req, res, next) {
     maxAge: 604800000,
     httpOnly: true,
   });
-  res.status(201).json({
-    userId: createdUser.id,
+  res.status(200).json({
+    user: user.toObject({ getters: true }),
     token: 'Bearer ' + token,
+  });
+}
+
+async function resendConfirmUserEmail(req, res, next) {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return next(ERR.INVALID_DATA);
+  }
+
+  const { userId } = req.body;
+
+  const code = crypto.randomBytes(4).toString('hex');
+  const hash = await bcrypt.hash(code, 12);
+
+  let user;
+  try {
+    user = await User.findOne({
+      _id: userId,
+    });
+  } catch (err) {
+    return next(ERR.DB_FAILURE);
+  }
+
+  try {
+    await ConfirmEmailToken.findOneAndUpdate(
+      {
+        userId,
+      },
+      { token: hash, userId },
+      { overwrite: true, upsert: true },
+    );
+  } catch (err) {
+    return next(ERR.DB_FAILURE);
+  }
+
+  try {
+    await sendConfirmEmailMessage(user.email, {
+      username: user.firstName,
+      code,
+    });
+  } catch (err) {
+    return next(new HttpError('Sending email failed, please try again', 500));
+  }
+
+  res.status(200).json({
+    message: 'Email with confirmation code sent',
   });
 }
 
@@ -155,7 +256,7 @@ async function updateUser(req, res, next) {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    return next(new HttpError('Invalid inputs passed.', 422));
+    return next(ERR.INVALID_DATA);
   }
 
   const { firstName, lastName, publicName } = req.body;
@@ -191,7 +292,7 @@ async function updatePassword(req, res, next) {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    return next(new HttpError('Invalid inputs passed.', 422));
+    return next(ERR.INVALID_DATA);
   }
 
   const { password, newPassword } = req.body;
@@ -225,7 +326,7 @@ async function updateUserPhoto(req, res, next) {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    return next(new HttpError('Invalid inputs passed.', 422));
+    return next(ERR.INVALID_DATA);
   }
 
   const { userPhoto } = req.body;
@@ -302,6 +403,8 @@ async function addNotificationToken(req, res, next) {
 
 module.exports = {
   createUser,
+  confirmUserEmail,
+  resendConfirmUserEmail,
   updateUser,
   getUserDetails,
   updatePassword,
