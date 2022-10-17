@@ -35,7 +35,7 @@ router.post(
     check('name').not().isEmpty(),
     check('description').not().isEmpty(),
     check('goal').not().isEmpty(),
-    //check('expirationDate').not().isEmpty(),
+    // check('expirationDate').not().isEmpty(),
     check('isPublic').not().isEmpty(),
     check('image').not().isEmpty(),
   ],
@@ -45,7 +45,7 @@ router.post(
 router.put(
   '/update_basket/:id',
   basketController.updateBasket,
-)
+)   
 
 router.delete(
   '/delete_basket/:id',

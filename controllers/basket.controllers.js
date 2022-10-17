@@ -6,6 +6,8 @@ const HttpError = require('../utils/http-error');
 const Basket = require('../models/basket.model');
 const Participants = require('../models/participant.model');
 
+const { createCustomer } = require('../services/stripe/create-customer.service')
+
 const onePageLimit = 12;
 
 const getOrderArgs = (order) => {
@@ -173,6 +175,13 @@ async function createBasket(req, res, next) {
         return next(new HttpError('Invalid or not all inputs passed.', 422));
     }
 
+    let stripeId;
+    try{
+        stripeId = await createCustomer({ email:'', firstName: req.body.name, lastName: 'Basket' })
+    }catch(err){
+        return next(new HttpError(`Error when creating a basket appeared. Message: ${err.message}`, 500));
+    }
+
     let basket;
 
     try{
@@ -185,7 +194,8 @@ async function createBasket(req, res, next) {
             expirationDate: req.body.expirationDate,
             isPublic: req.body.isPublic,
             creationDate: Date.now(),
-            image: req.body.image
+            image: req.body.image,
+            stripeId
         })
     }
     catch (error){
