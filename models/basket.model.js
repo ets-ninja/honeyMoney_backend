@@ -12,6 +12,7 @@ const basketSchema = new Schema({
   isPublic: { type: Boolean, required: true },
   creationDate: { type: Number, required: true },
   image: { type: String },
+  stripeId: { type: String, required: true },
 });
 /*.plugin(function(schema, options) {
     schema.pre('save', function(next) {

@@ -7,20 +7,11 @@ admin.initializeApp({
   databaseURL: process.env.FIREBASE_DATABASE_URL,
 });
 
-const sendMessage = async userTokens => {
+const sendMessage = async (userTokens, data, notification) => {
   try {
     await admin.messaging().sendMulticast({
-      data: {
-        title: 'Hello',
-        body: 'World',
-        clickAction: 'http://localhost:3000/myjars',
-      },
-      notification: {
-        title: 'Alex Ordynski',
-        body: '101$ on medicines jar',
-        image:
-          'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
-      },
+      data,
+      notification,
       tokens: userTokens,
     });
   } catch (error) {

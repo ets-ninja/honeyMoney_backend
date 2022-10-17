@@ -1,4 +1,5 @@
 require('dotenv').config();
+const logger = require('../services/logger');
 const HttpError = require('../utils/http-error');
 
 const stripe = require('stripe')(process.env.STRIPE_SK_TEST);
@@ -19,15 +20,20 @@ const {
 const {
   getConnectedCard,
 } = require('../services/stripe/get-connected-account.services');
+const {
+  createRefund,
+} = require('../services/stripe/transactions/stripe/create-refund.service');
 
 // entities
 const Transaction = require('../models/transaction.model');
 const Basket = require('../models/basket.model');
 const User = require('../models/user.model');
+const sendMessage = require('../services/notifications');
 
 // get customer balance
 async function getCustomerBalance(req, res, next) {
   const { stripeUserId } = req.user;
+
   let balance;
   try {
     const customer = await stripe.customers.retrieve(stripeUserId);
@@ -61,11 +67,12 @@ async function getCustomerCards(req, res, next) {
       cards.push(card);
     }
     if (connectedAccount) {
-      const card = await getConnectedCard({ accountId: connectedAccount });
-      cards.push(card);
+      //const card = await getConnectedCard({ accountId: connectedAccount });
+      //cards.push(card);
     }
     return res.status(200).json(cards);
   } catch (err) {
+    console.log('hjello');
     const error = new HttpError(
       'Could not find cards. Please add one first.',
       500,
@@ -99,7 +106,36 @@ async function newSetupIntent(req, res, next) {
 // payment from customer - one payment session - "donate" button
 async function newPaymentIntent(req, res, next) {
   const { stripeUserId, email } = req.user;
-  const { amount, description, paymentMethod } = req.body;
+  const { amount, description, last4 } = req.body;
+
+  let paymentMethods;
+  try {
+    paymentMethods = await stripe.customers.listPaymentMethods(stripeUserId, {
+      type: 'card',
+    });
+  } catch (err) {
+    console.log(err);
+    const error = new HttpError(
+      'Could not find your card. Please try again later',
+      500,
+    );
+    return next(error);
+  }
+
+  let paymentMethod;
+  for (let i = 0; i < paymentMethods.data.length; i++) {
+    if (paymentMethods.data[i].card.last4 == last4) {
+      paymentMethod = paymentMethods.data[i].id;
+    }
+  }
+  if (!paymentMethod) {
+    const error = new HttpError(
+      "You don't have a card with this number. Please try again later",
+      500,
+    );
+    return next(error);
+  }
+
   let payment_secret = {};
   try {
     const paymentIntent = await stripe.paymentIntents.create({
@@ -130,20 +166,56 @@ async function newPaymentIntent(req, res, next) {
 
 // calls when payment intent succeeded maybe shoud be merged with PaymentIntent func
 async function sendMoneyToBasket(req, res, next) {
-  const { id } = req.user;
+  const { id, firstName, lastName } = req.user;
   const { paymentIntentId, basketId } = req.body;
 
-  const basket = await Basket.findOne({ _id: basketId });
-  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+  let basket;
+  try {
+    basket = await Basket.findOne({ _id: basketId });
+  } catch (err) {
+    createRefund({ paymentIntentId });
+    const error = new HttpError(
+      'Could find basket. Please try again later',
+      500,
+    );
+    return next(error);
+  }
+
+  let paymentIntent;
+  try {
+    paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+  } catch (err) {
+    createRefund({ paymentIntentId });
+    const error = new HttpError(
+      'Could find payment. Please try again later',
+      500,
+    );
+    return next(error);
+  }
 
   // send money to basket
   try {
     await changeBalance({
       stripeUserId: basket.stripeId,
       amount: `-${paymentIntent.amount}`,
-      description: paymentIntentId.description,
+      description: paymentIntent.description,
     });
   } catch (err) {
+    createRefund({ paymentIntentId });
+    const error = new HttpError(
+      'Could not create transactions. Please try again later',
+      500,
+    );
+    return next(error);
+  }
+
+  // change basket value
+  let value = paymentIntent.amount / 100;
+  try {
+    basket.value += value;
+    await basket.save();
+  } catch (err) {
+    createRefund({ paymentIntentId });
     const error = new HttpError(
       'Could not create transactions. Please try again later',
       500,
@@ -163,7 +235,7 @@ async function sendMoneyToBasket(req, res, next) {
     });
     await newTransaction.save();
   } catch (err) {
-    console.log(err);
+    createRefund({ paymentIntentId });
     const error = new HttpError(
       'Could not create transactions. Please try again later',
       500,
@@ -174,7 +246,24 @@ async function sendMoneyToBasket(req, res, next) {
   const owner = await User.findOne({ _id: basket.ownerId });
 
   if (owner.notificationTokens) {
-    console.log(owner);
+    try {
+      await sendMessage(
+        owner.notificationTokens,
+        {
+          title: 'Hello',
+          body: 'World',
+          clickAction: `http://localhost:3000/basket/${basketId}`,
+        },
+        {
+          title: `${firstName} ${lastName}`,
+          body: `${paymentIntent.amount / 100}$ on ${basket.name}`,
+          image:
+            'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
+        },
+      );
+    } catch (err) {
+      logger.error('Cant send Notification');
+    }
   }
 
   res.status(201).json({ mes: 'Donate successful' });
@@ -263,7 +352,24 @@ async function receiveMoney(req, res, next) {
 }
 
 async function createConnectedAccount(req, res, next) {
-  const { reauthLink, returnLink } = req.body;
+  const { id } = req.user;
+
+  let currentUser;
+  try {
+    currentUser = await User.findOne({ _id: id });
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create an account. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
+  if (currentUser.connectedAccount) {
+    const error = new HttpError('You already have an account', 500);
+    return next(error);
+  }
+
   let connectedAccount;
   try {
     connectedAccount = await stripe.accounts.create({
@@ -288,10 +394,11 @@ async function createConnectedAccount(req, res, next) {
   try {
     accountLink = await stripe.accountLinks.create({
       account: connectedAccount.id,
-      refresh_url: reauthLink, //redirect if link is expired
-      return_url: returnLink, //redirect after completing flow
+      refresh_url: `${process.env.APP_URL}/profile`, //redirect if link is expired
+      return_url: `${process.env.APP_URL}/profile`, //redirect after completing flow
       type: 'account_onboarding',
     });
+    console.log(accountLink);
   } catch (err) {
     const error = new HttpError(
       'Could not register you now. Please try again later.',
@@ -299,7 +406,7 @@ async function createConnectedAccount(req, res, next) {
     );
     return next(error);
   }
-  res.status(200).json(accountLink);
+  res.status(200).json(accountLink.url);
 }
 
 module.exports = {
