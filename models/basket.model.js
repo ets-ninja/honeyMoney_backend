@@ -8,13 +8,10 @@ const basketSchema = new Schema({
   description: { type: String, required: false },
   goal: { type: Number, required: true },
   value: { type: Number, required: true },
-  // expirationDate: { type: Date, required: false },
   expirationDate: { type: Number, required: false },
   isPublic: { type: Boolean, required: true },
-  // creationDate: { type: Date, required: true },
   creationDate: { type: Number, required: true },
   image: { type: String },
-  stripeId: { type: String, required: false },
 });
 /*.plugin(function(schema, options) {
     schema.pre('save', function(next) {
