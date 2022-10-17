@@ -170,6 +170,13 @@ async function sendMoneyToBasket(req, res, next) {
     );
     return next(error);
   }
+
+  const owner = await User.findOne({ _id: basket.ownerId });
+
+  if (owner.notificationTokens) {
+    console.log(owner);
+  }
+
   res.status(201).json({ mes: 'Donate successful' });
 }
 
