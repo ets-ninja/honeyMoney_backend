@@ -6,7 +6,7 @@ const sendConfirmEmailMessage = async (to, { username, code }) => {
   const valid_hours = (EMAIL_EXPIRE / 3600).toFixed(1);
   return await sendMessage(
     to,
-    'Email confiramtion HoneyMoney',
+    'Email confirmation - 🐝HoneyMoney🐝',
     './templates/confirmEmail.hbs',
     {
       email: to,

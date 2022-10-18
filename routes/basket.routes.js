@@ -31,13 +31,11 @@ router.get(
 
 router.post(
   '/create_basket',
+  passport.authenticate('jwt', { session: false }),
   [
-    check('name').not().isEmpty(),
-    check('description').not().isEmpty(),
-    check('goal').not().isEmpty(),
-    //check('expirationDate').not().isEmpty(),
+    check('basketName').not().isEmpty(),
+    check('moneyGoal').not().isEmpty(),
     check('isPublic').not().isEmpty(),
-    check('image').not().isEmpty(),
   ],
   basketController.createBasket,
 );
