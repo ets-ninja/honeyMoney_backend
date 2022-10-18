@@ -8,6 +8,9 @@ const { cookieExtractor } = require('../utils/authenticate.helpers');
 // Models
 const User = require('../models/user.model');
 
+// Constants
+const { USER_STATUS } =require('../constants');
+
 //Services
 const {
   createCustomer,
@@ -68,7 +71,7 @@ passport.use(
             publicName: name,
             email,
             stripeUserId,
-            notificationTokens: [],
+            status: USER_STATUS.ACTIVE,
           },
           function (err, user) {
             if (err) {
