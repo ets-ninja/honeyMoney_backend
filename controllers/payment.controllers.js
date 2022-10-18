@@ -306,7 +306,7 @@ async function receiveMoney(req, res, next) {
     }
 
     try {
-      await instantPayout({ amount, destination: connectedAccount });
+      await instantPayout({ amount: amount * 100, destination: connectedAccount });
     } catch (err) {
       new HttpError(
         "Sorry, your country doesn't support instant payouts. Stripe will send your funds to your bank account within a few days.",

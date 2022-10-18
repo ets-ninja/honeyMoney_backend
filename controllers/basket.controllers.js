@@ -14,8 +14,8 @@ const onePageLimit = 12;
 
 const getOrderArgs = (order) => {
     switch(order) {
-        case "Newest to oldest": return { createdAt: -1, _id: 1 };
-        case "Oldest to newest": return { createdAt: 1, _id: 1 };
+        case "Newest to oldest": return { creationDate: -1, _id: 1 };
+        case "Oldest to newest": return { creationDate: 1, _id: 1 };
         case "Expensive to cheap": return { goal: -1, _id: 1 };
         case "Cheap to expensive": return { goal: 1, _id: 1 };
         case "Soon to expire": return { expirationDate: 1, _id: 1 };
@@ -177,6 +177,7 @@ async function createBasket(req, res, next) {
   }
 
     let stripeId;
+
     try{
         stripeId = await createCustomer({ email:'', firstName: req.body.basketName, lastName: 'Basket' })
     }catch(err){

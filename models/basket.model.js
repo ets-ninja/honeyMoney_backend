@@ -15,12 +15,4 @@ const basketSchema = new Schema({
   stripeId: { type: String, required: true },
 });
 
-/*.plugin(function(schema, options) {
-    schema.pre('save', function(next) {
-        this.status.isHot = (new Date(Date.parse(this.status.expirationDate) - Date.now()).getDate() < 7);
-
-        next();
-    })
-})*/
-
 module.exports = mongoose.model('Basket', basketSchema);
