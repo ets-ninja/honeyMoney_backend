@@ -10,8 +10,8 @@ const onePageLimit = 12;
 
 const getOrderArgs = (order) => {
     switch(order) {
-        case "Newest to oldest": return { createdAt: -1, _id: 1 };
-        case "Oldest to newest": return { createdAt: 1, _id: 1 };
+        case "Newest to oldest": return { creationDate: -1, _id: 1 };
+        case "Oldest to newest": return { creationDate: 1, _id: 1 };
         case "Expensive to cheap": return { goal: -1, _id: 1 };
         case "Cheap to expensive": return { goal: 1, _id: 1 };
         case "Soon to expire": return { expirationDate: 1, _id: 1 };
@@ -223,11 +223,11 @@ async function updateJar(req, res, next) {
         return next(new HttpError('Invalid inputs passed.', 422));
     }
 
-    const { id } = req.params;
-    const { name, expirationDate, description } = req.body;
+    const { id, name, expirationDate, description, goal } = req.body;
 
     const updatedJar = {
         ...(name && { name }),
+        ...(goal && { goal }),
         ...(expirationDate && { expirationDate }),
         ...(description && { description }),
     }
@@ -238,7 +238,7 @@ async function updateJar(req, res, next) {
         { _id: id },
         updatedJar,
         { new: true },
-      );
+      ).select('-image -ownerId');
     } catch (err) {
       const error = new HttpError(
         'Updating failed, please try again later.',
@@ -248,7 +248,7 @@ async function updateJar(req, res, next) {
     }
   
     res.status(200).json({
-      basketId: existingJar.id,
+      jar: existingJar,
       message: 'Jar data updated',
     });
 }

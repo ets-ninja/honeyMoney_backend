@@ -43,11 +43,12 @@ router.post(
 );
 
 router.put(
-  '/update_jar/:id',
+  '/update_jar',
   [
     //passport.authenticate('jwt', { session: false }),
     oneOf([
       check('name').not().isEmpty(),
+      check('goal').not().isEmpty(),
       check('expirationDate').not().isEmpty(),
       check('description').not().isEmpty(),
     ]),
