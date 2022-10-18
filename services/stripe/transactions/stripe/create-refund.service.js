@@ -5,7 +5,7 @@ async function createRefund({ paymentIntentId }) {
     payment_intent: paymentIntentId,
   });
 
-  return refund.id
+  return refund.id;
 }
 
 module.exports = { createRefund };

@@ -12,7 +12,7 @@ async function createTransaction({
     basketId,
     userId,
     stripeId,
-    amount: amount/100,
+    amount: amount / 100,
     comment,
     card,
     status: 'succeeded',

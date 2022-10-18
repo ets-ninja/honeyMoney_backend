@@ -9,7 +9,7 @@ const { cookieExtractor } = require('../utils/authenticate.helpers');
 const User = require('../models/user.model');
 
 // Constants
-const { USER_STATUS } =require('../constants');
+const { USER_STATUS } = require('../constants');
 
 //Services
 const {

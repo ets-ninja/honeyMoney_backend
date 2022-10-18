@@ -52,12 +52,8 @@ router.post(
   paymentController.createConnectedAccount,
 );
 
-router.get(
-  '/req',
-  (req, res, next)=>{
-    console.log(req)
-  }
-);
-
+router.get('/req', (req, res, next) => {
+  console.log(req);
+});
 
 module.exports = router;
