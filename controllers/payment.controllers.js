@@ -67,12 +67,11 @@ async function getCustomerCards(req, res, next) {
       cards.push(card);
     }
     if (connectedAccount) {
-      //const card = await getConnectedCard({ accountId: connectedAccount });
-      //cards.push(card);
+      const card = await getConnectedCard({ accountId: connectedAccount });
+      cards.push(card);
     }
     return res.status(200).json(cards);
   } catch (err) {
-    console.log('hjello');
     const error = new HttpError(
       'Could not find cards. Please add one first.',
       500,
