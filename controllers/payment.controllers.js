@@ -359,9 +359,8 @@ async function receiveMoney(req, res, next) {
         return next(error);
     }
 
-    let transaction;
     try{
-        transaction = await createTransaction({
+        const transaction = await createTransaction({
           basketId: basket._id,
           userId: req.user._id,
           stripeId: transfer,
@@ -369,6 +368,7 @@ async function receiveMoney(req, res, next) {
           comment: `Payouts from ${basket.name}`,
           card: paymentMethod.last4,
         });
+        res.status(200).json(transaction.status);
     }catch(err){
         const error = new HttpError(
           'Could not create transaction. Please try again later.',
@@ -376,7 +376,6 @@ async function receiveMoney(req, res, next) {
         );
         return next(error);
     }
-    res.status(200).json(transaction.status);
 }
 
 async function createConnectedAccount(req, res, next) {
