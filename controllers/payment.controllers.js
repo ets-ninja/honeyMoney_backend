@@ -66,11 +66,6 @@ async function getCustomerCards(req, res, next) {
       };
       cards.push(card);
     }
-    if (connectedAccount) {
-      const card = await getConnectedCard({ accountId: connectedAccount });
-      cards.push(card);
-    }
-    return res.status(200).json(cards);
   } catch (err) {
     const error = new HttpError(
       'Could not find cards. Please add one first.',
@@ -78,6 +73,11 @@ async function getCustomerCards(req, res, next) {
     );
     return next(error);
   }
+  if (connectedAccount) {
+    const card = await getConnectedCard({ accountId: connectedAccount });
+    cards.push(card);
+  }
+  return res.status(200).json(cards);
 }
 
 // set up future payments for customer (add card)
@@ -121,12 +121,9 @@ async function newPaymentIntent(req, res, next) {
     return next(error);
   }
 
-  let paymentMethod;
-  for (let i = 0; i < paymentMethods.data.length; i++) {
-    if (paymentMethods.data[i].card.last4 == last4) {
-      paymentMethod = paymentMethods.data[i].id;
-    }
-  }
+  const paymentMethod = paymentMethods.data.find(
+    method => method.card.last4 === last4,
+  )?.id;
   if (!paymentMethod) {
     const error = new HttpError(
       "You don't have a card with this number. Please try again later",
@@ -143,7 +140,6 @@ async function newPaymentIntent(req, res, next) {
       description: description,
       currency: 'usd',
       payment_method: paymentMethod,
-      //   automatic_payment_methods: { enabled: true },
       confirm: true,
       off_session: true,
       receipt_email: email,
@@ -165,7 +161,7 @@ async function newPaymentIntent(req, res, next) {
 
 // calls when payment intent succeeded maybe shoud be merged with PaymentIntent func
 async function sendMoneyToBasket(req, res, next) {
-  const { id, firstName, lastName } = req.user;
+  const { _id, firstName, lastName } = req.user;
   const { paymentIntentId, basketId } = req.body;
 
   let basket;
@@ -201,6 +197,7 @@ async function sendMoneyToBasket(req, res, next) {
     });
   } catch (err) {
     createRefund({ paymentIntentId });
+    console.log(err);
     const error = new HttpError(
       'Could not create transactions. Please try again later',
       500,
@@ -226,7 +223,7 @@ async function sendMoneyToBasket(req, res, next) {
   try {
     const newTransaction = await createTransaction({
       basketId,
-      userId: id,
+      userId: _id,
       stripeId: paymentIntent.id,
       amount: paymentIntent.amount,
       comment: paymentIntent.description,
@@ -273,10 +270,10 @@ async function sendMoneyToBasket(req, res, next) {
 
 // get list of transactions
 async function userTransactionsHistory(req, res, next) {
-  const { id } = req.user;
+  const { _id } = req.user;
   let transactions;
   try {
-    transactions = await Transaction.find({ userId: id });
+    transactions = await Transaction.find({ userId: _id });
   } catch (err) {
     const error = new HttpError(
       'Could not find transactions. Please try again later',
@@ -288,62 +285,75 @@ async function userTransactionsHistory(req, res, next) {
 }
 
 async function receiveMoney(req, res, next) {
+  const { connectedAccount } = req.user;
+  const { basketId } = req.body;
+
+  let basket;
   try {
-    const { id, connectedAccount } = req.user;
-    const { basketId, basket_name } = req.body;
+    basket = await Basket.findOne({
+      _id: basketId,
+      ownerId: req.user._id,
+    });
+  } catch (err) {
+    const error = new HttpError(
+      'Could not find this basket. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
 
-    const basket = await Basket.findOne({ balance_id: basketId });
-    // some verification
-    if (id !== basket.ownerId) {
-      const error = new HttpError(
-        'Could not find your basket with this id',
-        500,
-      );
-      return next(error);
-    }
-    const amount = basket.value;
-    if (amount !== basket.goal) {
-      const error = new HttpError('Basket is not full yet', 500);
-      return next(error);
-    }
-    if (!connectedAccount) {
-      const error = new HttpError(
-        'You should add an account to hold money fisrt',
-        500,
-      );
-      return next(error);
-    }
+  // some verification
+  if (!basket.ownerId.equals(req.user._id)) {
+    const error = new HttpError('Could not find your basket with this id', 500);
+    return next(error);
+  }
 
-    const transfer = await createTransfer({
-      amount,
+  const amount = basket.value;
+  if (amount !== basket.goal) {
+    const error = new HttpError('Basket is not full yet.', 500);
+    return next(error);
+  }
+  if (!connectedAccount) {
+    const error = new HttpError(
+      'You should add an account to hold money first.',
+      500,
+    );
+    return next(error);
+  }
+
+  const amountInDollars = amount * 100;
+  let transfer;
+  try {
+    transfer = await createTransfer({
+      amount: amountInDollars,
       destination: connectedAccount,
     });
-    if (!transfer) {
-      const error = new HttpError(
-        'Could not send funds. Please try again later.',
-        500,
-      );
-      return next(error);
-    }
-    await instantPayout({ amount, destination: connectedAccount });
-    const balance = await changeBalance({ stripeUserId: basketId, amount });
-    if (!balance) {
-      const error = new HttpError(
-        'Could not send funds. Please try again later.',
-        500,
-      );
-      return next(error);
-    }
-    const paymentMethod = await getConnectedCard('connectedAccount');
-    const transaction = await createTransaction({
-      basketId: basket._id,
-      userId: id,
-      stripeId: transfer,
-      amount: amount,
-      comment: `Payouts from ${basket_name}`,
-      paymentMethod: paymentMethod,
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create transfer. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
+  try {
+    await instantPayout({
+      amount: amountInDollars,
+      destination: connectedAccount,
     });
-    res.status(200).json(transaction);
+  } catch (err) {
+    new HttpError(
+      "Sorry, your country doesn't support instant payouts. Stripe will send your funds to your bank account within a few days.",
+      500,
+    );
+  }
+
+  try {
+    await changeBalance({
+      stripeUserId: basket.stripeId,
+      amount: amountInDollars,
+      description: `Payouts from ${basket.name}`,
+    });
   } catch (err) {
     const error = new HttpError(
       'Could not send funds. Please try again later.',
@@ -351,14 +361,54 @@ async function receiveMoney(req, res, next) {
     );
     return next(error);
   }
+
+  let paymentMethod;
+  try {
+    paymentMethod = await getConnectedCard({ accountId: connectedAccount });
+  } catch (err) {
+    const error = new HttpError(
+      'Could find your card to send funds. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
+  try {
+    basket.value -= amount;
+    await basket.save();
+  } catch (err) {
+    const error = new HttpError(
+      'Could find your card to send funds. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
+
+  try {
+    const transaction = await createTransaction({
+      basketId: basket._id,
+      userId: req.user._id,
+      stripeId: transfer,
+      amount: amount,
+      comment: `Payouts from ${basket.name}`,
+      card: paymentMethod.last4,
+    });
+    res.status(200).json(transaction.status);
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create transaction. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
 }
 
 async function createConnectedAccount(req, res, next) {
-  const { id } = req.user;
+  const { _id } = req.user;
 
   let currentUser;
   try {
-    currentUser = await User.findOne({ _id: id });
+    currentUser = await User.findOne({ _id: _id });
   } catch (err) {
     const error = new HttpError(
       'Could not create an account. Please try again later.',
@@ -388,7 +438,7 @@ async function createConnectedAccount(req, res, next) {
   }
 
   await User.findOneAndUpdate(
-    { _id: req.user.id },
+    { _id: req.user._id },
     { connectedAccount: connectedAccount.id },
   );
 
