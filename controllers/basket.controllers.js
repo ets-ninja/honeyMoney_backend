@@ -8,12 +8,14 @@ const HttpError = require('../utils/http-error');
 const Basket = require('../models/basket.model');
 const Participants = require('../models/participant.model');
 
+const { createCustomer } = require('../services/stripe/create-customer.service')
+
 const onePageLimit = 12;
 
 const getOrderArgs = (order) => {
     switch(order) {
-        case "Newest to oldest": return { createdAt: -1, _id: 1 };
-        case "Oldest to newest": return { createdAt: 1, _id: 1 };
+        case "Newest to oldest": return { creationDate: -1, _id: 1 };
+        case "Oldest to newest": return { creationDate: 1, _id: 1 };
         case "Expensive to cheap": return { goal: -1, _id: 1 };
         case "Cheap to expensive": return { goal: 1, _id: 1 };
         case "Soon to expire": return { expirationDate: 1, _id: 1 };
@@ -174,29 +176,34 @@ async function createBasket(req, res, next) {
     return next(new HttpError('Invalid or not all inputs passed.', 422));
   }
 
-  try {
-    const basket = await Basket.create({
-      ownerId: req.user._id,
-      name: req.body.name,
-      description: req.body.description,
-      goal: req.body.goal,
-      value: 0,
-      expirationDate: req.body.expirationDate,
-      isPublic: req.body.isPublic,
-      creationDate: Date.now(),
-      image: req.body.image,
-    });
-    res
-      .status(201)
-      .json({ id: basket._id, message: 'Successfully created a basket.' });
-  } catch (error) {
-    return next(
-      new HttpError(
-        `Error when creating a basket appeared. Message: ${error.message}`,
-        500,
-      ),
-    );
-  }
+    let stripeId;
+
+    try{
+        stripeId = await createCustomer({ email:'', firstName: req.body.basketName, lastName: 'Basket' })
+    }catch(err){
+        return next(new HttpError(`Error when creating a basket appeared. Message: ${err.message}`, 500));
+    }
+
+    let basket;
+    try{
+        basket = await Basket.create({
+            ownerId: req.user._id,
+            name: req.body.basketName,
+            description: req.body.description,
+            goal: req.body.moneyGoal,
+            value: 0,
+            expirationDate: req.body.expirationDate,
+            isPublic: req.body.isPublic,
+            creationDate: +new Date(),
+            image: req.body.photoTag,
+            stripeId
+        })
+    }
+    catch (error){
+        return next(new HttpError(`Error when creating a basket appeared. Message: ${error.message}`, 500));
+    }
+
+    res.status(201).json({ id: basket._id, message: "Successfully created a basket." });
 }
 
 async function updateBasket(req, res, next) {
