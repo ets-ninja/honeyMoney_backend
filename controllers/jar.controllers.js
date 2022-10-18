@@ -1,10 +1,14 @@
 const { validationResult } = require('express-validator');
+
 const mongoose = require('mongoose');
 const ObjectId = mongoose.Types.ObjectId;
+
 const HttpError = require('../utils/http-error');
 
 const Jar = require('../models/jar.model');
 const Participants = require('../models/participant.model');
+
+const { createCustomer } = require('../services/stripe/create-customer.service')
 
 const onePageLimit = 12;
 
@@ -186,27 +190,34 @@ async function getPrivateJars(req, res, next) {
         })
 }
 
-
 async function createBasket(req, res, next) {
-    const errors = validationResult(req);
+  const errors = validationResult(req);
 
-    if (!errors.isEmpty()) {
-        return next(new HttpError('Invalid or not all inputs passed.', 422));
+  if (!errors.isEmpty()) {
+    return next(new HttpError('Invalid or not all inputs passed.', 422));
+  }
+
+    let stripeId;
+
+    try{
+        stripeId = await createCustomer({ email:'', firstName: req.body.basketName, lastName: 'Basket' })
+    }catch(err){
+        return next(new HttpError(`Error when creating a basket appeared. Message: ${err.message}`, 500));
     }
 
     let basket;
-
     try{
         basket = await Jar.create({
             ownerId: req.user._id,
-            name: req.body.name,
+            name: req.body.basketName,
             description: req.body.description,
-            goal: req.body.goal,
+            goal: req.body.moneyGoal,
             value: 0,
             expirationDate: req.body.expirationDate,
             isPublic: req.body.isPublic,
-            creationDate: Date.now(),
-            image: req.body.image
+            creationDate: +new Date(),
+            image: req.body.photoTag,
+            stripeId
         })
     }
     catch (error){
