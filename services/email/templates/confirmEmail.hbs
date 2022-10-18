@@ -1,0 +1,17 @@
+<mjml>
+  <mj-body background-color="#fff">
+    <mj-section>
+      <mj-column>
+        <mj-divider border-color="#555"></mj-divider>
+        <mj-text font-size="20px" color="#555" font-family="helvetica">HoneyMoney - Confirm Email</mj-text>
+        <mj-text font-size="16px" color="#555">We received a request to create account for user {{ username }}
+          with email {{ email }}</mj-text>
+        <mj-text font-size="16px" color="#555">Please copy the code bellow:</mj-text>
+        <mj-text font-size="20px" color="#000" align="center" font-weight="600">{{code}}</mj-text>
+        <mj-divider border-color="#555" border-width="2px" />
+        <mj-text font-size="14px" color="#555">This code will expire in {{ valid_hours }} hours.</mj-text>
+        <mj-text font-size="14px" color="#555">If you didn't request a password recovery you can disregard this email.</mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

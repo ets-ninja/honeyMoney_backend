@@ -1,0 +1,58 @@
+{
+  "name": "honey-money_backend",
+  "version": "1.0.0",
+  "description": "Server for elifTech school 2022 Anton's team project",
+  "main": "index.js",
+  "author": "elifTech school 2022 Anton's team",
+  "license": "ISC",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon index.js",
+    "deploy": "node index.js",
+    "prettier": "prettier --write --config .prettierrc.json \"**/*.js\"",
+    "lint": "eslint --fix --config .eslintrc.json \"**/*.js\""
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "@logtail/node": "^0.1.12",
+    "@logtail/winston": "^0.1.13",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.2",
+    "express": "^4.18.1",
+    "express-validator": "^6.14.2",
+    "firebase-admin": "^11.1.0",
+    "handlebars": "^4.7.7",
+    "mjml": "^4.13.0",
+    "mongoose": "^6.6.1",
+    "mongoose-unique-validator": "^3.1.0",
+    "morgan": "^1.10.0",
+    "nodemailer": "^6.7.8",
+    "passport": "^0.6.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-jwt": "^4.0.0",
+    "stripe": "^10.11.0",
+    "swagger-ui-express": "^4.5.0",
+    "winston": "^3.8.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.23.1",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
+    "nodemon": "^2.0.19",
+    "prettier": "^2.7.1"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx,json,css,scss,md}": [
+      "prettier --write"
+    ]
+  }
+}
