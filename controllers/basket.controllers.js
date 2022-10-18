@@ -1,6 +1,8 @@
 const { validationResult } = require('express-validator');
+
 const mongoose = require('mongoose');
 const ObjectId = mongoose.Types.ObjectId;
+
 const HttpError = require('../utils/http-error');
 
 const Basket = require('../models/basket.model');
@@ -167,13 +169,12 @@ async function getPrivateBaskets(req, res, next) {
         })
 }
 
-
 async function createBasket(req, res, next) {
-    const errors = validationResult(req);
+  const errors = validationResult(req);
 
-    if (!errors.isEmpty()) {
-        return next(new HttpError('Invalid or not all inputs passed.', 422));
-    }
+  if (!errors.isEmpty()) {
+    return next(new HttpError('Invalid or not all inputs passed.', 422));
+  }
 
     let stripeId;
 
