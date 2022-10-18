@@ -37,11 +37,11 @@ async function createWishlistItem(req, res, next) {
 async function getWishlistItem(req, res, next) {
   const { id: _id } = req.params;
 
-  let wishlistItem;
   try {
-    wishlistItem = await WishlistItem.find({
+    const wishlistItem = await WishlistItem.find({
       _id,
     });
+    return res.status(200).json(...wishlistItem);
   } catch (err) {
     const error = new HttpError(
       `Failed to get all items, please try again. ${err.message}`,
@@ -49,8 +49,6 @@ async function getWishlistItem(req, res, next) {
     );
     return next(error);
   }
-
-  return res.status(200).json(...wishlistItem);
 }
 
 async function updateWishlistItem(req, res, next) {
