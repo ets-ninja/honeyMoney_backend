@@ -1,6 +1,8 @@
 const { validationResult } = require('express-validator');
+
 const mongoose = require('mongoose');
 const ObjectId = mongoose.Types.ObjectId;
+
 const HttpError = require('../utils/http-error');
 
 const Basket = require('../models/basket.model');
@@ -15,9 +17,9 @@ const onePageLimit = 12;
 const getOrderArgs = order => {
   switch (order) {
     case 'Newest to oldest':
-      return { createdAt: -1, _id: 1 };
+      return { creationDate: -1, _id: 1 };
     case 'Oldest to newest':
-      return { createdAt: 1, _id: 1 };
+      return { creationDate: 1, _id: 1 };
     case 'Expensive to cheap':
       return { goal: -1, _id: 1 };
     case 'Cheap to expensive':
@@ -196,10 +198,11 @@ async function createBasket(req, res, next) {
   }
 
   let stripeId;
+
   try {
     stripeId = await createCustomer({
       email: '',
-      firstName: req.body.name,
+      firstName: req.body.basketName,
       lastName: 'Basket',
     });
   } catch (err) {
@@ -212,7 +215,6 @@ async function createBasket(req, res, next) {
   }
 
   let basket;
-
   try {
     basket = await Basket.create({
       ownerId: req.user._id,
