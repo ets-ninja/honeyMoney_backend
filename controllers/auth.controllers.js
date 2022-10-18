@@ -12,7 +12,7 @@ const { ERR, REFRESH_COOKIE_NAME } = require('../constants');
 
 // Models
 const User = require('../models/user.model');
-const ResetToken = require('../models/reset-token.model');
+const ResetToken = require('../models/email-token.model');
 
 // Services
 const sendRestorePasswordMessage = require('../services/email/messages/restorePassword');
@@ -73,7 +73,7 @@ async function loginUser(req, res, next) {
     })
     .status(200)
     .json({
-      userId: existingUser.id,
+      user: existingUser.toObject({ getters: true }),
       token: 'Bearer ' + token,
     });
 }
@@ -85,7 +85,6 @@ async function validateEmail(req, res, next) {
     return next(new HttpError('Invalid email passed.', 422));
   }
   const email = req.query.email.toLowerCase();
-  console.log(req.query);
 
   let existingUser;
 
