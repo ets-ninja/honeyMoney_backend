@@ -119,12 +119,7 @@ async function newPaymentIntent(req, res, next) {
     return next(error);
   }
 
-  let paymentMethod;
-  for (let i = 0; i < paymentMethods.data.length; i++) {
-    if (paymentMethods.data[i].card.last4 == last4) {
-      paymentMethod = paymentMethods.data[i].id;
-    }
-  }
+  const paymentMethod = paymentMethods.data.find(method => method.card.last4 === last4)?.id;
   if (!paymentMethod) {
     const error = new HttpError(
       "You don't have a card with this number. Please try again later",
