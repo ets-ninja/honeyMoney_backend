@@ -3,7 +3,11 @@ const HttpError = require('../utils/http-error');
 
 const Basket = require('../models/basket.model');
 const Participants = require('../models/participant.model');
-const User = require('../models/user.model')
+const User = require('../models/user.model');
+const {
+  changeBalance,
+} = require('../services/stripe/transactions/stripe/change-balance.service');
+const stripe = require('stripe')(process.env.STRIPE_SK_TEST);
 
 /*
 function includes(baskets, basket) {
@@ -177,10 +181,11 @@ async function shareBasket(req, res, next) {
   const owner = await User.findOne({ _id: basket.ownerId });
 
   try {
-    if (basket.isPublic === false) {
-      return next(new HttpError('This basket is not public', 404));
-    }
+    // if (basket.isPublic === false) {
+    //   return next(new HttpError('This basket is not public', 404));
+    // }
 
+    console.log(req.body);
     res.render('index', {
       basketId: req.params.id,
       basketName: basket.name,
@@ -192,9 +197,15 @@ async function shareBasket(req, res, next) {
       userPhoto: owner.userPhoto,
     });
   } catch (error) {
-    console.log(error);
+    return next(
+      new HttpError(
+        `Error when creating a basket appeared. Message: ${error.message}`,
+        500,
+      ),
+    );
   }
 }
+
 
 module.exports = {
   getOwnerBaskets,
@@ -206,4 +217,5 @@ module.exports = {
   updateBasket,
   deleteBasket,
   shareBasket,
+
 };

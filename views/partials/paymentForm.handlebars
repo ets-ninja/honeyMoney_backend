@@ -1,0 +1,33 @@
+<form id='form' action="/basket/create-payment-intent" >
+  <p class='amount'>Top up amount</p>
+  <div class='money_input'>
+    <input
+      type='text'
+      min='0.50'
+      onkeyup='changeValue(event)'
+      placeholder='How much you want to pay?'
+      id='amount'
+    />
+    <div class='money_buttons'>
+      <button onclick='setDonateAmount(50)'>+50$</button>
+      <button onclick='setDonateAmount(100)'>+100$</button>
+      <button onclick='setDonateAmount(150)'>+150$</button>
+    </div>
+    <input type='text' placeholder='First name' id='name' />
+  </div>
+  <textarea
+    placeholder='Comment'
+    name=''
+    id='comment'
+    cols='30'
+    rows='10'
+  ></textarea>
+  <div class='buttons'>
+    <button type="submit">donate</button>
+    <div id='payment-message' class='hidden'></div>
+    <div>
+      <a href='http://localhost:3000/login?basketId={{{basketId}}}'>SingIn</a>
+      <a href='#'>SingUp</a>
+    </div>
+  </div>
+</form>

@@ -7,11 +7,11 @@
     <div class='content'>
       <div class='prev'>
         {{#if userPhoto.length}}
-          <img src={{userPhoto}} alt='userPhoto' />
+          <img src='{{userPhoto}}' alt='userPhoto' />
         {{else}}
             <img src='/img/image 4.svg' alt='userPhoto' />
         {{/if}}
-        <p> {{userName}} створив збір</p>
+        <p> <strong>{{userName}}</strong> створив збір</p>
         <h2>{{basketName}}</h4>
         <p>{{description}}</p>
       </div>
@@ -32,31 +32,6 @@
     </div>
   </div>
   <div class='second_block'>
-    <p class="amount">Top up amount</p>
-    <form action="" id="form">
-      <div class="money_input">
-        <input type='text' min="0.50" onkeyup="changeValue(event)" placeholder="how much do you want to pay?" name='moneyInput' id='money_input'/>
-        <div class="money_buttons">
-          <button onclick="setDonateAmount(50)">+50$</button>
-          <button onclick="setDonateAmount(100)">+100$</button>
-          <button onclick="setDonateAmount(150)">+150$</button>
-        </div>
-        <input type="text" placeholder="First name" name="" id="">
-      </div>
-      <textarea
-        placeholder='Comment'
-        name=''
-        id='comment'
-        cols='30'
-        rows='10'
-      ></textarea>
-      <div class="buttons">
-        <button type="submit">Donate</button>
-        <div>
-          <a href="http://localhost:3000/login?basketId={{{basketId}}}">SingIn</a>
-          <a href="#">SingUp</a>
-        </div>
-      </div>
-    </form>
+    {{> paymentForm}}
   </div>
 </div>
