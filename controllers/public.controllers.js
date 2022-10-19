@@ -1,5 +1,5 @@
 const ObjectId = require('mongoose').Types.ObjectId;
-const Basket = require('../models/basket.model');
+const Basket = require('../models/jar.model');
 const User = require('../models/user.model');
 const Participant = require('../models/participant.model');
 
@@ -23,12 +23,13 @@ const getPaginationSettings = (req, jarsCount) => {
   return { jarsPerPage, pageCount, skip };
 };
 
+// SHOULD BE DOUBLE CHECKED IF SORTING WORKS WELL
 const getSortSettings = order => {
   switch (order) {
     case 'date asc':
-      return { createdAt: -1, _id: 1 };
+      return { creationDate: -1, _id: 1 };
     case 'date desc':
-      return { createdAt: 1, _id: 1 };
+      return { creationDate: 1, _id: 1 };
     case 'value desc':
       return { goal: -1, _id: 1 };
     case 'value asc':
@@ -38,7 +39,7 @@ const getSortSettings = order => {
     case 'time desc':
       return { expirationDate: -1, _id: 1 };
     default:
-      return { createdAt: -1, _id: 1 };
+      return { creationDate: -1, _id: 1 };
   }
 };
 

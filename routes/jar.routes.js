@@ -43,7 +43,7 @@ router.post(
 router.put(
   '/update_jar',
   [
-    //passport.authenticate('jwt', { session: false }),
+    passport.authenticate('jwt', { session: false }),
     oneOf([
       check('name').not().isEmpty(),
       check('goal').not().isEmpty(),
@@ -52,6 +52,15 @@ router.put(
     ]),
   ],
   jarController.updateJar,
+)
+
+router.put(
+  '/update_jar_image',
+  [
+    passport.authenticate('jwt', { session: false }),
+    check('image').not().isEmpty(),
+  ],
+  jarController.updateJarImage,
 )
 
 router.delete(
