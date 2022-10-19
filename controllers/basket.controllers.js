@@ -196,7 +196,8 @@ async function createBasket(req, res, next) {
             isPublic: req.body.isPublic,
             creationDate: +new Date(),
             image: req.body.photoTag,
-            stripeId
+            stripeId,
+            gaTag: req.body.gaTag
         })
     }
     catch (error){

@@ -13,6 +13,7 @@ const basketSchema = new Schema({
   creationDate: { type: Number, required: true },
   image: { type: String },
   stripeId: { type: String, required: true },
+  gaTag: { type: String, required: false }
 });
 
 module.exports = mongoose.model('Basket', basketSchema);
