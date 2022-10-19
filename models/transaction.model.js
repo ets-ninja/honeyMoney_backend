@@ -17,7 +17,6 @@ const transactionSchema = new Schema(
     amount: { type: Number, required: true },
     comment: { type: String, required: true, default: '' },
     card: { type: Number },
-    // type: {type: String, enum:['balance', 'card']},
     status: { type: String, required: true, enum: ['succeeded', 'canceled'] },
   },
   { timestamps: true },

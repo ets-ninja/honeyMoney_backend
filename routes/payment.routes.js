@@ -40,7 +40,7 @@ router.get(
   paymentController.userTransactionsHistory,
 );
 
-router.get(
+router.post(
   '/recieve_money',
   passport.authenticate('jwt', { session: false }),
   paymentController.receiveMoney,
