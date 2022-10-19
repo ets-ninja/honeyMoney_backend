@@ -3,7 +3,7 @@ const stripe = require('stripe')(process.env.STRIPE_SK_TEST);
 async function getConnectedCard({ accountId }) {
   const account = await stripe.accounts.retrieve(accountId);
   return {
-    id: account.external_accounts.data.id,
+    id: account.external_accounts.data[0].id,
     brand: account.external_accounts.data[0].brand,
     country: account.external_accounts.data[0].country,
     exp_month: account.external_accounts.data[0].exp_month,

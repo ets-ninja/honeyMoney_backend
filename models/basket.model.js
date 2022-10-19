@@ -10,7 +10,7 @@ const basketSchema = new Schema({
   isPublic: { type: Boolean, required: true },
   creationDate: { type: Number, required: true },
   image: { type: String },
-  stripeId: {type: String, required: true }
+  stripeId: { type: String, required: true },
 });
 
 module.exports = mongoose.model('Basket', basketSchema);

@@ -10,7 +10,11 @@ const wishlistItemSchema = new Schema(
     },
     name: { type: String, required: true },
     image: { type: String, default: '' },
-    description: { type: String, max: 255, default: '' },
+    description: {
+      type: String,
+      maxLength: 1000,
+      default: '',
+    },
     finalGoal: { type: Number, required: true },
   },
   { timestamps: true },

@@ -34,13 +34,14 @@ async function createWishlistItem(req, res, next) {
     .json({ id: wishlistItem._id, message: 'New wishlist item created' });
 }
 
-async function getAllWishlistItems(req, res, next) {
-  const ownerId = req.user.id;
-  let wishlistItems;
+async function getWishlistItem(req, res, next) {
+  const { id: _id } = req.params;
+
   try {
-    wishlistItems = await WishlistItem.find({
-      ownerId,
+    const wishlistItem = await WishlistItem.find({
+      _id,
     });
+    return res.status(200).json(...wishlistItem);
   } catch (err) {
     const error = new HttpError(
       `Failed to get all items, please try again. ${err.message}`,
@@ -48,10 +49,6 @@ async function getAllWishlistItems(req, res, next) {
     );
     return next(error);
   }
-
-  return res.status(200).json({
-    ...wishlistItems,
-  });
 }
 
 async function updateWishlistItem(req, res, next) {
@@ -163,7 +160,7 @@ async function sortWishlistItems(req, res, next) {
 
 module.exports = {
   createWishlistItem,
-  getAllWishlistItems,
+  getWishlistItem,
   updateWishlistItem,
   deleteWishlistItem,
   sortWishlistItems,

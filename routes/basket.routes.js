@@ -1,47 +1,41 @@
 const express = require('express');
 const { check } = require('express-validator');
+const passport = require('passport');
 const basketController = require('../controllers/basket.controllers');
 
 const router = express.Router();
 
-//app.use('/api/basket', basketRoutes);
-//const basketRoutes = require('./routes/basket.routes');
-
 router.get(
   '/get_owner_baskets',
+  passport.authenticate('jwt', { session: false }),
   basketController.getOwnerBaskets,
 );
 
 router.get(
   '/get_coowner_baskets',
+  passport.authenticate('jwt', { session: false }),
   basketController.getCoownerBaskets,
 );
 
 router.get(
-  '/get_hot_baskets',
-  basketController.getHotBaskets,
-);
-
-router.get(
   '/get_public_baskets',
+  passport.authenticate('jwt', { session: false }),
   basketController.getPublicBaskets,
 );
 
 router.get(
   '/get_private_baskets',
+  passport.authenticate('jwt', { session: false }),
   basketController.getPrivateBaskets,
 );
 
 router.post(
   '/create_basket',
+  passport.authenticate('jwt', { session: false }),
   [
-    check('name').not().isEmpty(),
-    check('description').not().isEmpty(),
-    check('goal').not().isEmpty(),
-    check('value').not().isEmpty(),
-    check('expirationDate').not().isEmpty(),
+    check('basketName').not().isEmpty(),
+    check('moneyGoal').not().isEmpty(),
     check('isPublic').not().isEmpty(),
-    check('image').not().isEmpty(),
   ],
   basketController.createBasket,
 );
@@ -54,6 +48,12 @@ router.put(
 router.delete(
   '/delete_basket/:id',
   basketController.deleteBasket,
+)
+
+router.get(
+  '/get_basket_by_id',
+  passport.authenticate('jwt', { session: false }),
+  basketController.getBasketById,
 )
 
 module.exports = router;

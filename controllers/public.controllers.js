@@ -23,13 +23,48 @@ const getPaginationSettings = (req, jarsCount) => {
   return { jarsPerPage, pageCount, skip };
 };
 
+const getSortSettings = order => {
+  switch (order) {
+    case 'date asc':
+      return { createdAt: -1, _id: 1 };
+    case 'date desc':
+      return { createdAt: 1, _id: 1 };
+    case 'value desc':
+      return { goal: -1, _id: 1 };
+    case 'value asc':
+      return { goal: 1, _id: 1 };
+    case 'time asc':
+      return { expirationDate: 1, _id: 1 };
+    case 'time desc':
+      return { expirationDate: -1, _id: 1 };
+    default:
+      return { createdAt: -1, _id: 1 };
+  }
+};
+
 const lookupAndUnwind = [
   {
     $lookup: {
       from: 'users',
       localField: 'ownerId',
       foreignField: '_id',
+      pipeline: [
+        { $project: { email: 0, password: 0, firstName: 0, lastName: 0 } },
+      ],
       as: 'user',
+    },
+  },
+  {
+    $lookup: {
+      from: 'transactions',
+      localField: '_id',
+      foreignField: 'basketId',
+      pipeline: [
+        { $match: { status: 'succeeded' } },
+        { $sort: { createdAt: -1 } },
+        { $project: { createdAt: 1, comment: 1 } },
+      ],
+      as: 'transactions',
     },
   },
   { $unwind: '$user' },
@@ -37,6 +72,7 @@ const lookupAndUnwind = [
 
 async function getPublicJars(req, res, next) {
   const userId = req.user?._id;
+  const sort = getSortSettings(req?.query?.sortOrder);
 
   try {
     const excludeParticpants = await getParticipantsIds(userId);
@@ -63,6 +99,7 @@ async function getPublicJars(req, res, next) {
 
     const jarsWithUser = await Basket.aggregate([
       matchStage,
+      { $sort: sort },
       { $skip: skip },
       { $limit: jarsPerPage },
       ...lookupAndUnwind,
@@ -83,6 +120,7 @@ async function getPublicJars(req, res, next) {
 async function getJarsByFilter(req, res, next) {
   const userId = req.user?._id;
   const { filterQuery } = req.query;
+  const sort = getSortSettings(req?.query?.sortOrder);
 
   try {
     const matchedUsers = await User.find({
@@ -148,6 +186,7 @@ async function getJarsByFilter(req, res, next) {
           ],
         },
       },
+      { $sort: sort },
       { $skip: skip },
       { $limit: jarsPerPage },
       ...lookupAndUnwind,
@@ -169,6 +208,7 @@ async function getJarsByFilter(req, res, next) {
 async function getUserJars(req, res, next) {
   const userId = req.user?._id;
   const { userToFind } = req.query;
+  const sort = getSortSettings(req?.query?.sortOrder);
 
   try {
     const excludeParticpants = await getParticipantsIds(userId);
@@ -195,6 +235,7 @@ async function getUserJars(req, res, next) {
 
     const jarsWithUser = await Basket.aggregate([
       matchStage,
+      { $sort: sort },
       { $skip: skip },
       { $limit: jarsPerPage },
       ...lookupAndUnwind,
