@@ -40,20 +40,14 @@ router.post(
   basketController.createBasket,
 );
 
-router.put(
-  '/update_basket/:id',
-  basketController.updateBasket,
-)   
+router.put('/update_basket/:id', basketController.updateBasket);
 
-router.delete(
-  '/delete_basket/:id',
-  basketController.deleteBasket,
-)
+router.delete('/delete_basket/:id', basketController.deleteBasket);
 
 router.get(
   '/get_basket_by_id',
   passport.authenticate('jwt', { session: false }),
   basketController.getBasketById,
-)
+);
 
 module.exports = router;
