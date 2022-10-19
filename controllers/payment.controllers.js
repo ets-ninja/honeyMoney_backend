@@ -260,6 +260,7 @@ async function sendMoneyToBasket(req, res, next) {
             'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
         },
       );
+      req.io.in(owner.id).emit('message', { message: 'Hello' });
     } catch (err) {
       logger.error('Cant send Notification');
     }
