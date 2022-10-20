@@ -12,26 +12,23 @@ async function createWishlistItem(req, res, next) {
   const { name, description, finalGoal, image } = req.body;
   const ownerId = req.user.id;
 
-  let wishlistItem;
   try {
-    wishlistItem = await WishlistItem.create({
+    const wishlistItem = await WishlistItem.create({
       name,
       ownerId,
       image,
       description,
       finalGoal,
     });
+
+    return res.status(201).json({ id: wishlistItem._id });
   } catch (err) {
     const error = new HttpError(
-      `New wishlist item creation failed, please try again. ${err.message}`,
+      'New wishlist item creation failed, please try again.',
       500,
     );
     return next(error);
   }
-
-  return res
-    .status(201)
-    .json({ id: wishlistItem._id, message: 'New wishlist item created' });
 }
 
 async function getWishlistItem(req, res, next) {
@@ -41,10 +38,11 @@ async function getWishlistItem(req, res, next) {
     const wishlistItem = await WishlistItem.find({
       _id,
     });
+
     return res.status(200).json(...wishlistItem);
   } catch (err) {
     const error = new HttpError(
-      `Failed to get all items, please try again. ${err.message}`,
+      'Failed to get all items, please try again.',
       500,
     );
     return next(error);
@@ -63,9 +61,8 @@ async function updateWishlistItem(req, res, next) {
     image,
   };
 
-  let updated;
   try {
-    updated = await WishlistItem.findOneAndUpdate(
+    const updated = await WishlistItem.findOneAndUpdate(
       { _id, ownerId },
       updatedItem,
       {
@@ -78,17 +75,17 @@ async function updateWishlistItem(req, res, next) {
         message: 'Attempt to update not existing item.',
       });
     }
+
+    return res.status(202).json({
+      updatedItem: updated,
+    });
   } catch (err) {
     const error = new HttpError(
-      `Failed to update this item, please try again. ${err.message}`,
+      'Failed to update this item, please try again.',
       500,
     );
     return next(error);
   }
-
-  return res.status(202).json({
-    updatedItem: updated,
-  });
 }
 
 async function deleteWishlistItem(req, res, next) {
@@ -106,17 +103,15 @@ async function deleteWishlistItem(req, res, next) {
         message: 'Attempt to delete not existing item.',
       });
     }
+
+    return res.status(200);
   } catch (err) {
     const error = new HttpError(
-      `Failed to delete this item, please try again. ${err.message}`,
+      'Failed to delete this item, please try again.',
       500,
     );
     return next(error);
   }
-
-  return res.status(200).json({
-    message: 'Wishlist item deleted',
-  });
 }
 
 async function sortWishlistItems(req, res, next) {
@@ -131,31 +126,30 @@ async function sortWishlistItems(req, res, next) {
   let sort = {};
   sort[field] = order;
 
-  let sortedItems, countItems, pageCount;
   try {
-    countItems = await WishlistItem.countDocuments({ ownerId });
+    const countItems = await WishlistItem.countDocuments({ ownerId });
 
-    sortedItems = await WishlistItem.find({ ownerId })
+    const sortedItems = await WishlistItem.find({ ownerId })
       .sort({ ...sort, _id: 1 })
       .limit(itemsPerPage)
       .skip(skip);
 
-    pageCount = Math.ceil(countItems / itemsPerPage);
+    const pageCount = Math.ceil(countItems / itemsPerPage);
+
+    return res.status(200).json({
+      pagination: {
+        countItems,
+        pageCount,
+      },
+      sortedItems,
+    });
   } catch (err) {
     const error = new HttpError(
-      `Failed to get sorted items, please try again. ${err.message}`,
+      'Failed to get sorted items, please try again.',
       500,
     );
     return next(error);
   }
-
-  return res.status(200).json({
-    pagination: {
-      countItems,
-      pageCount,
-    },
-    sortedItems,
-  });
 }
 
 module.exports = {
