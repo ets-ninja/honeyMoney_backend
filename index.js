@@ -50,7 +50,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/basket', basketRoutes);
 app.use('/api/wishlist', wishlistRoutes);
-``;
 app.use('/api/api_docs', docsRoute);
 app.use('/api/payment', payRoutes);
 app.use('/api/public', publicRoutes);
