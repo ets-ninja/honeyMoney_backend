@@ -6,6 +6,7 @@ const ObjectId = mongoose.Types.ObjectId;
 const HttpError = require('../utils/http-error');
 
 const Basket = require('../models/basket.model');
+const User = require('../models/user.model')
 const Participants = require('../models/participant.model');
 
 const { createCustomer } = require('../services/stripe/create-customer.service')
@@ -236,9 +237,9 @@ async function shareBasket(req, res, next) {
   const owner = await User.findOne({ _id: basket.ownerId });
 
   try {
-    // if (basket.isPublic === false) {
-    //   return next(new HttpError('This basket is not public', 404));
-    // }
+    if (basket.isPublic === false) {
+      return next(new HttpError('This basket is not public', 404));
+    }
 
     console.log(req.body);
     res.render('index', {

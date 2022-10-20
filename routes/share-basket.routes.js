@@ -17,9 +17,7 @@ router.post('/create-payment-intent', async (req, res) => {
   const items = req.body;
 
   console.log("items", items);
-  // Create a PaymentIntent with the order amount and currency
   const paymentIntent = await stripe.paymentIntents.create({
-    // customer: 'cus_MbNQOgJE0qZcBq',
     amount: items.amount,
     currency: 'usd',
     automatic_payment_methods: {

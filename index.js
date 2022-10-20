@@ -21,7 +21,6 @@ const wishlistRoutes = require('./routes/wishlist.routes');
 const docsRoute = require('./routes/api-docs.routes');
 const basketRoutes = require('./routes/basket.routes');
 const payRoutes = require('./routes/payment.routes');
-const basketRoutes = require('./routes/basket.routes');
 const shareBasket = require('./routes/share-basket.routes');
 const publicRoutes = require('./routes/public.routes');
 

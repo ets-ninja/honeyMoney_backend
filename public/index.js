@@ -1,7 +1,7 @@
 const stripe = Stripe(
   'pk_test_51LlgddKPhPFjc58J31VCe6tDBvpabqjvZQ7caoM878BaF7QEpCGb3cnRBXpAp2ietjsbAQJRUV8RATlvdgT3qGlT00Il1uonIP',
 );
-const name = document.getElementById('name');
+const userName = document.getElementById('userName');
 const description = document.getElementById('comment');
 const amount = document.getElementById('amount');
 const paymentForm = document.getElementById('payment-form');
@@ -20,7 +20,6 @@ const changeValue = e => {
     return;
   }
   const newPrice = e.target.value.match(/^(\d+([.,])?\d{0,2})$/g);
-  // const newPrice = e.target.value.match(/(0|[1-9]\d*)([.]\d+)?/);
 
   if (newPrice !== null) {
     price = newPrice;
@@ -40,7 +39,7 @@ form?.addEventListener('submit', e => {
   localStorage.setItem(
     'clientInfo',
     JSON.stringify({
-      name: name.value,
+      userName: userName.value,
       amount: Number(amount.value),
       description: description.value,
     }),
@@ -48,11 +47,8 @@ form?.addEventListener('submit', e => {
 
   window.location.href = '/basket/create-payment-intent';
 });
-// if (paymentForm) {
 document
-  .querySelector('#payment-form')
-  .addEventListener('submit', handleSubmit);
-// }
+  .querySelector('#payment-form')?.addEventListener('submit', handleSubmit);
 
 async function initialize() {
   const clientInfo = localStorage.getItem('clientInfo');
@@ -63,7 +59,7 @@ async function initialize() {
     body: JSON.stringify({
       amount: info.amount,
       description: info.description,
-      name: info.name,
+      userName: info.userName,
     }),
   });
   const { clientSecret } = await response.json();
@@ -77,7 +73,6 @@ async function initialize() {
     clientSecret,
     appearance,
   });
-  // const cardElement =
   paymentElement.mount('#payment-element');
 }
 
@@ -88,23 +83,10 @@ async function handleSubmit(e) {
   const { error } = await stripe.confirmPayment({
     elements,
     confirmParams: {
-      // Make sure to change this to your payment completion page
       return_url: 'http://localhost:5050/basket/success/:param',
-      // payment_method_data: {
-      //   billing_details: {
-      //     name: name.value,
-      //     email: email.value,
-      //   },
-      // description: comment.value,
-      // },
     },
   });
 
-  // This point will only be reached if there is an immediate error when
-  // confirming the payment. Otherwise, your customer will be redirected to
-  // your `return_url`. For some payment methods like iDEAL, your customer will
-  // be redirected to an intermediate site first to authorize the payment, then
-  // redirected to the `return_url`.
   if (error.type === 'card_error' || error.type === 'validation_error') {
     showMessage(error.message);
   } else {
@@ -114,7 +96,6 @@ async function handleSubmit(e) {
   setLoading(false);
 }
 
-// Fetches the payment intent status after payment submission
 async function checkStatus() {
   const clientSecret = new URLSearchParams(window.location.search).get(
     'payment_intent_client_secret',
@@ -142,8 +123,6 @@ async function checkStatus() {
   }
 }
 
-// ------- UI helpers -------
-
 function showMessage(messageText) {
   const messageContainer = document.querySelector('#payment-message');
 
@@ -156,10 +135,8 @@ function showMessage(messageText) {
   }, 4000);
 }
 
-// Show a spinner on payment submission
 function setLoading(isLoading) {
   if (isLoading) {
-    // Disable the button and show a spinner
     document.querySelector('#submit').disabled = true;
     document.querySelector('#spinner').classList.remove('hidden');
     document.querySelector('#button-text').classList.add('hidden');
