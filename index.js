@@ -75,28 +75,26 @@ mongoose.connection.on('open', () => {
 });
 
 io.on('connection', socket => {
-  console.log('a user connected ');
+  logger.info('a user connected ');
 
   socket.on('join', function (room) {
-    console.log(`User ${socket.id} joined the room ${room}`);
+    logger.info(`User ${socket.id} joined the room ${room}`);
     socket.join(room);
   });
 
   socket.on('leave', function () {
-    console.log(socket.rooms);
     socket.rooms.forEach(room => {
-      console.log(`User ${socket.id} joined the room ${room}`);
+      logger.info(`User ${socket.id} joined the room ${room}`);
       socket.leave(room);
     });
   });
 
   socket.on('error', err => {
-    console.log('received socket error:');
-    console.log(err);
+    logger.error('received socket error: ', err);
   });
 
   socket.on('disconnect', () => {
-    console.log('user disconnected');
+    logger.info('user disconnected');
   });
 });
 

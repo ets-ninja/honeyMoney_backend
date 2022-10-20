@@ -247,40 +247,32 @@ async function sendMoneyToBasket(req, res, next) {
     logger.error('Cant send Notification');
   }
 
+  const notification = {
+    title: `${firstName} ${lastName}`,
+    body: `${paymentIntent.amount / 100}$ on ${basket.name}`,
+    image:
+      'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
+  };
+  const data = {
+    clickAction: `basket/${basketId}`,
+  };
+
   if (owner.notificationTokens.length > 0) {
     try {
-      await sendMessage(
-        owner.notificationTokens,
-        {
-          clickAction: `${process.env.APP_URL}/basket/${basketId}`,
-        },
-        {
-          title: `${firstName} ${lastName}`,
-          body: `${paymentIntent.amount / 100}$ on ${basket.name}`,
-          image:
-            'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
-        },
-      );
+      await sendMessage(owner.notificationTokens, data, notification);
     } catch (error) {
-      logger.error('Cant send Notification with FCM');
+      logger.error('Can`t send Notification with FCM', error);
     }
   }
 
   try {
     await req.io.in(owner.id).emit('message', {
       messageId: uuidv4(),
-      notification: {
-        title: `${firstName} ${lastName}`,
-        body: `${paymentIntent.amount / 100}$ on ${basket.name}`,
-        image:
-          'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
-      },
-      data: {
-        clickAction: `${process.env.APP_URL}/basket/${basketId}`,
-      },
+      notification,
+      data,
     });
   } catch (error) {
-    logger.error('Cant send Notification with Socket');
+    logger.error('Can`t send Notification with Socket', error);
   }
 
   res.status(201).json({ mes: 'Donate successful' });
