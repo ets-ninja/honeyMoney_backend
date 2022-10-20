@@ -255,6 +255,7 @@ async function sendMoneyToBasket(req, res, next) {
   };
   const data = {
     clickAction: `basket/${basketId}`,
+    clickActionBack: `${process.env.APP_URL}/basket/${basketId}`,
   };
 
   if (owner.notificationTokens.length > 0) {
