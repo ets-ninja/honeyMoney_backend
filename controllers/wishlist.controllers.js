@@ -104,7 +104,9 @@ async function deleteWishlistItem(req, res, next) {
       });
     }
 
-    return res.status(200);
+    return res.status(200).json({
+      message: 'Wish item deleted successfully',
+    });
   } catch (err) {
     const error = new HttpError(
       'Failed to delete this item, please try again.',
