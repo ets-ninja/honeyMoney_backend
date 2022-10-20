@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { v4: uuidv4 } = require('uuid');
 const logger = require('../services/logger');
 const HttpError = require('../utils/http-error');
 
@@ -246,7 +247,7 @@ async function sendMoneyToBasket(req, res, next) {
     logger.error('Cant send Notification');
   }
 
-  if (owner?.notificationTokens) {
+  if (owner.notificationTokens.length > 0) {
     try {
       await sendMessage(
         owner.notificationTokens,
@@ -260,10 +261,26 @@ async function sendMoneyToBasket(req, res, next) {
             'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
         },
       );
-      req.io.in(owner.id).emit('message', { message: 'Hello' });
-    } catch (err) {
-      logger.error('Cant send Notification');
+    } catch (error) {
+      logger.error('Cant send Notification with FCM');
     }
+  }
+
+  try {
+    await req.io.in(owner.id).emit('message', {
+      messageId: uuidv4(),
+      notification: {
+        title: `${firstName} ${lastName}`,
+        body: `${paymentIntent.amount / 100}$ on ${basket.name}`,
+        image:
+          'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
+      },
+      data: {
+        clickAction: `${process.env.APP_URL}/basket/${basketId}`,
+      },
+    });
+  } catch (error) {
+    logger.error('Cant send Notification with Socket');
   }
 
   res.status(201).json({ mes: 'Donate successful' });
