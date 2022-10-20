@@ -1,5 +1,7 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
@@ -23,6 +25,12 @@ const payRoutes = require('./routes/payment.routes');
 const publicRoutes = require('./routes/public.routes');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+  },
+});
 
 app.use(cors({ origin: APP_URL, credentials: true }));
 app.use(cookieParser());
@@ -32,6 +40,12 @@ app.use(
   express.urlencoded({ limit: '10mb', extended: true, parameterLimit: 50000 }),
 );
 app.use(morganMiddleware);
+
+app.use((req, res, next) => {
+  req.io = io;
+  return next();
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/basket', basketRoutes);
@@ -60,6 +74,30 @@ mongoose.connection.on('open', () => {
   logger.info('MongoDB connected');
 });
 
+io.on('connection', socket => {
+  logger.info('a user connected ');
+
+  socket.on('join', function (room) {
+    logger.info(`User ${socket.id} joined the room ${room}`);
+    socket.join(room);
+  });
+
+  socket.on('leave', function () {
+    socket.rooms.forEach(room => {
+      logger.info(`User ${socket.id} joined the room ${room}`);
+      socket.leave(room);
+    });
+  });
+
+  socket.on('error', err => {
+    logger.error('received socket error: ', err);
+  });
+
+  socket.on('disconnect', () => {
+    logger.info('user disconnected');
+  });
+});
+
 async function startServer() {
   try {
     await mongoose.connect(MONGO_URL);
@@ -67,7 +105,7 @@ async function startServer() {
     logger.error(err);
   }
 
-  app.listen(PORT, err => {
+  server.listen(PORT, err => {
     if (err) {
       logger.error(err);
       return;

@@ -1,6 +1,7 @@
 var admin = require('firebase-admin');
 
 var serviceAccount = require('../../honeymoneyworker-firebase-adminsdk-4ru0p-4db0149331.json');
+const logger = require('../logger');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -15,7 +16,7 @@ const sendMessage = async (tokens, data, notification) => {
       tokens,
     });
   } catch (error) {
-    throw new Error(error.message);
+    logger.error('Cant send Notification with FCM', error);
   }
 };
 
