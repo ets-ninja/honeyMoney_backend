@@ -32,7 +32,7 @@ async function createWishlistItem(req, res, next) {
 }
 
 async function getWishlistItem(req, res, next) {
-  const { id: _id } = req.params;
+  const { itemId: _id } = req.params;
 
   try {
     const wishlistItem = await WishlistItem.find({
