@@ -25,18 +25,13 @@ router.post(
 
 router.patch(
   '/signup/confirm',
-  [
-    check('userId').not().isEmpty(),
-    check('code').isLength({ min: 8, max: 8 }),
-  ],
+  [check('userId').not().isEmpty(), check('code').isLength({ min: 8, max: 8 })],
   userController.confirmUserEmail,
 );
 
 router.post(
   '/signup/resend_confirm',
-  [
-    check('userId').not().isEmpty(),
-  ],
+  [check('userId').not().isEmpty()],
   userController.resendConfirmUserEmail,
 );
 
