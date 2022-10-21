@@ -227,7 +227,7 @@ async function sendMoneyToBasket(req, res, next) {
       userId: _id,
       stripeId: paymentIntent.id,
       amount: paymentIntent.amount,
-      comment: paymentIntent.description,
+      comment: paymentIntent.description || ' ',
       card: paymentIntent.charges.data[0].payment_method_details.card.last4,
     });
     await newTransaction.save();
