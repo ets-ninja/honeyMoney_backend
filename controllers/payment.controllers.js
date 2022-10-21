@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { v4: uuidv4 } = require('uuid');
 const logger = require('../services/logger');
 const HttpError = require('../utils/http-error');
 
@@ -246,23 +247,33 @@ async function sendMoneyToBasket(req, res, next) {
     logger.error('Cant send Notification');
   }
 
-  if (owner?.notificationTokens) {
+  const notification = {
+    title: `${firstName} ${lastName}`,
+    body: `${paymentIntent.amount / 100}$ on ${basket.name}`,
+    image:
+      'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
+  };
+  const data = {
+    clickAction: `basket/${basketId}`,
+    clickActionBack: `${process.env.APP_URL}/basket/${basketId}`,
+  };
+
+  if (owner.notificationTokens.length > 0) {
     try {
-      await sendMessage(
-        owner.notificationTokens,
-        {
-          clickAction: `${process.env.APP_URL}/basket/${basketId}`,
-        },
-        {
-          title: `${firstName} ${lastName}`,
-          body: `${paymentIntent.amount / 100}$ on ${basket.name}`,
-          image:
-            'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
-        },
-      );
-    } catch (err) {
-      logger.error('Cant send Notification');
+      await sendMessage(owner.notificationTokens, data, notification);
+    } catch (error) {
+      logger.error('Can`t send Notification with FCM', error);
     }
+  }
+
+  try {
+    await req.io.in(owner.id).emit('message', {
+      messageId: uuidv4(),
+      notification,
+      data,
+    });
+  } catch (error) {
+    logger.error('Can`t send Notification with Socket', error);
   }
 
   res.status(201).json({ mes: 'Donate successful' });
@@ -309,7 +320,7 @@ async function receiveMoney(req, res, next) {
   }
 
   const amount = basket.value;
-  if (amount !== basket.goal) {
+  if (amount < basket.goal) {
     const error = new HttpError('Basket is not full yet.', 500);
     return next(error);
   }
