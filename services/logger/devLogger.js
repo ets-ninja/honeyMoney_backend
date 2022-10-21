@@ -1,14 +1,28 @@
 const { createLogger, format, transports } = require('winston');
 const { combine, timestamp, printf, colorize, errors } = format;
 
+const formatMeta = meta => {
+  const splat = meta[Symbol.for('splat')];
+
+  if (splat && splat.length) {
+    return `\n[metadata]: ${
+      splat.length === 1
+        ? JSON.stringify(splat)
+        : splat.reduce((acc, val, idx) => {
+            return acc + `\n${idx + 1}. ${JSON.stringify(val)}`;
+          }, '')
+    }`;
+  }
+  return '';
+};
+
 function createDevLogger() {
-  const devFormat = printf(
-    // eslint-disable-next-line no-unused-vars
-    ({ level, message, timestamp, stack, ...metadata }) => {
-      const msg = `${timestamp} [${level}]: ${stack || message}`;
-      return msg;
-    },
-  );
+  const devFormat = printf(({ level, message, timestamp, stack, ...meta }) => {
+    const msg = `${timestamp} [${level}]: ${stack || message} ${formatMeta(
+      meta,
+    )}`;
+    return msg;
+  });
 
   return createLogger({
     level: 'debug',

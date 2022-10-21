@@ -5,9 +5,7 @@ let logger;
 
 if (logger === undefined) {
   logger =
-    process.env.NODE_ENV === 'production'
-      ? createProdLogger()
-      : createDevLogger();
+    process.env.NODE_ENV === 'dev' ? createDevLogger() : createProdLogger();
 }
 
 module.exports = logger;
