@@ -110,7 +110,12 @@ async function getPublicJars(req, res, next) {
       jars: [...jarsWithUser],
     });
   } catch (error) {
-    next(error);
+    next(
+      new HttpError(
+        `Couldn't fetch public jars. Message: ${error.message}`,
+        500,
+      ),
+    );
   }
 }
 
@@ -184,7 +189,12 @@ async function getJarsByFilter(req, res, next) {
       users: matchedUsers,
     });
   } catch (error) {
-    next(error);
+    next(
+      new HttpError(
+        `Couldn't perform search for public jars. Message: ${error.message}`,
+        500,
+      ),
+    );
   }
 }
 
@@ -228,7 +238,12 @@ async function getUserJars(req, res, next) {
       jars: [...jarsWithUser],
     });
   } catch (error) {
-    next(error);
+    next(
+      new HttpError(
+        `Couldn't fetch users public jars. Message: ${error.message}`,
+        500,
+      ),
+    );
   }
 }
 
@@ -249,7 +264,12 @@ async function getModalJar(req, res, next) {
 
     res.status(200).json(...modalJar);
   } catch (error) {
-    next(error);
+    next(
+      new HttpError(
+        `Couldn't fetch modal public jar. Message: ${error.message}`,
+        500,
+      ),
+    );
   }
 }
 
