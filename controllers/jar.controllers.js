@@ -345,21 +345,47 @@ async function updateJarImage(req, res, next) {
     });
 }
 
-
-async function deleteJar(req, res, next) {
-    //const id = req.params.id;
-
-    //const deleted = Basket.deleteOne({ _id: id })
-
-} 
-
 async function getJarById(req, res, next) {
     const { id } = req.query;
     
     let jar = {};
 
     try{
-        jar = await Jar.findById(id).populate('ownerId');
+        jar = await Jar.aggregate([
+            { $match: { _id: ObjectId(id) } },
+            { $lookup: {
+                from: 'users',
+                localField: 'ownerId',
+                foreignField: '_id',
+                pipeline: [
+                  { $project: { email: 0, password: 0, firstName: 0, lastName: 0 } },
+                ],
+                as: 'user',
+                },
+            },
+            { $lookup: {
+                from: 'transactions',
+                localField: '_id',
+                foreignField: 'basketId',
+                pipeline: [
+                  { $match: { status: 'succeeded' } },
+                  { $sort: { createdAt: -1 } },
+                  { $project: { card: 0 } },
+                  { $lookup: {
+                        from: 'users',
+                        localField: 'userId',
+                        foreignField: '_id',
+                        pipeline: [
+                        { $project: { userPhoto: 0, email: 0, password: 0, notificationTokens: 0 } },
+                        ],
+                        as: 'user',
+                    }
+                  }
+                ],
+                as: 'transactions',
+                },
+            },
+        ]);
     } catch (err){
         return next(new HttpError(`No jar with ${id} id exists`, 500));
     }
@@ -375,6 +401,6 @@ module.exports = {
     createBasket,
     updateJar,
     updateJarImage, 
-    deleteJar,
+    //deleteJar,
     getJarById 
 }

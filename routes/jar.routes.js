@@ -63,10 +63,10 @@ router.put(
   jarController.updateJarImage,
 )
 
-router.delete(
-  '/delete_jar/:id',
-  jarController.deleteJar,
-)
+//router.delete(
+//  '/delete_jar/:id',
+//  jarController.deleteJar,
+//)
 
 router.get(
   '/get_jar_by_id',
