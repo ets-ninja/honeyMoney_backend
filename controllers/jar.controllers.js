@@ -380,11 +380,53 @@ async function getJarById(req, res, next) {
                         ],
                         as: 'user',
                     }
-                  }
+                  },
+                  { $set: { user: { $first: "$user" } } }
                 ],
                 as: 'transactions',
                 },
             },
+        ]);
+    } catch (err){
+        return next(new HttpError(`No jar with ${id} id exists`, 500));
+    }
+
+    res.status(200).json({ basket: jar });
+}
+
+
+async function getJarFinanceById(req, res, next) {
+    const { id } = req.query;
+    
+    let jar = {};
+
+    try{
+        jar = await Jar.aggregate([
+            { $match: { _id: ObjectId(id) } },
+            { $lookup: {
+                from: 'transactions',
+                localField: '_id',
+                foreignField: 'basketId',
+                pipeline: [
+                  { $match: { status: 'succeeded' } },
+                  { $sort: { createdAt: -1 } },
+                  { $project: { card: 0 } },
+                  { $lookup: {
+                        from: 'users',
+                        localField: 'userId',
+                        foreignField: '_id',
+                        pipeline: [
+                        { $project: { userPhoto: 0, email: 0, password: 0, notificationTokens: 0 } },
+                        ],
+                        as: 'user',
+                    }
+                  },
+                  { $set: { user: { $first: "$user" } } }
+                ],
+                as: 'transactions',
+                },
+            },
+            { $project: { value: 1, transactions: 1 } }
         ]);
     } catch (err){
         return next(new HttpError(`No jar with ${id} id exists`, 500));
@@ -402,5 +444,6 @@ module.exports = {
     updateJar,
     updateJarImage, 
     //deleteJar,
-    getJarById 
+    getJarById,
+    getJarFinanceById 
 }

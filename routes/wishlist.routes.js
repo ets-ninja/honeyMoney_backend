@@ -15,9 +15,9 @@ router.post(
   wishlistController.createWishlistItem,
 );
 router.get(
-  '/',
+  '/get-item/:itemId',
   passport.authenticate('jwt', { session: false }),
-  wishlistController.getAllWishlistItems,
+  wishlistController.getWishlistItem,
 );
 router.patch(
   '/update/:itemId',

@@ -74,4 +74,10 @@ router.get(
   jarController.getJarById,
 )
 
+router.get(
+  '/get_jar_finance_by_id',
+  passport.authenticate('jwt', { session: false }),
+  jarController.getJarById,
+)
+
 module.exports = router;
