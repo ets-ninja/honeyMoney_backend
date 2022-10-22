@@ -1,12 +1,7 @@
 const ObjectId = require('mongoose').Types.ObjectId;
 const Basket = require('../models/jar.model');
 const User = require('../models/user.model');
-const Participant = require('../models/participant.model');
-
-const getParticipantsIds = async userId => {
-  const participants = await Participant.find({ user: userId }, '-_id basket');
-  return participants.map(el => el?.basket);
-};
+const HttpError = require('../utils/http-error');
 
 const getPaginationSettings = (req, jarsCount) => {
   let page = +req.query.page || 1;
@@ -27,9 +22,9 @@ const getPaginationSettings = (req, jarsCount) => {
 const getSortSettings = order => {
   switch (order) {
     case 'date asc':
-      return { creationDate: -1, _id: 1 };
-    case 'date desc':
       return { creationDate: 1, _id: 1 };
+    case 'date desc':
+      return { creationDate: -1, _id: 1 };
     case 'value desc':
       return { goal: -1, _id: 1 };
     case 'value asc':
@@ -39,7 +34,7 @@ const getSortSettings = order => {
     case 'time desc':
       return { expirationDate: -1, _id: 1 };
     default:
-      return { creationDate: -1, _id: 1 };
+      return { creationDate: 1, _id: 1 };
   }
 };
 
@@ -50,7 +45,14 @@ const lookupAndUnwind = [
       localField: 'ownerId',
       foreignField: '_id',
       pipeline: [
-        { $project: { email: 0, password: 0, firstName: 0, lastName: 0 } },
+        {
+          $project: {
+            email: 0,
+            password: 0,
+            firstName: 0,
+            lastName: 0,
+          },
+        },
       ],
       as: 'user',
     },
@@ -62,8 +64,8 @@ const lookupAndUnwind = [
       foreignField: 'basketId',
       pipeline: [
         { $match: { status: 'succeeded' } },
-        { $sort: { createdAt: -1 } },
-        { $project: { createdAt: 1, comment: 1 } },
+        { $sort: { creationDate: -1 } },
+        { $project: { creationDate: 1, comment: 1 } },
       ],
       as: 'transactions',
     },
@@ -72,17 +74,12 @@ const lookupAndUnwind = [
 ];
 
 async function getPublicJars(req, res, next) {
-  const userId = req.user?._id;
   const sort = getSortSettings(req?.query?.sortOrder);
 
   try {
-    const excludeParticpants = await getParticipantsIds(userId);
-
     const matchStage = {
       $match: {
         isPublic: true,
-        ownerId: { $ne: userId },
-        _id: { $nin: excludeParticpants },
       },
     };
 
@@ -114,29 +111,36 @@ async function getPublicJars(req, res, next) {
       jars: [...jarsWithUser],
     });
   } catch (error) {
-    next(error);
+    next(
+      new HttpError(
+        `Couldn't fetch public jars. Message: ${error.message}`,
+        500,
+      ),
+    );
   }
 }
 
 async function getJarsByFilter(req, res, next) {
-  const userId = req.user?._id;
   const { filterQuery } = req.query;
-  const sort = getSortSettings(req?.query?.sortOrder);
+  const sort = getSortSettings(req.query?.sortOrder);
 
   try {
     const matchedUsers = await User.find({
       $text: { $search: filterQuery },
-      _id: { $ne: userId },
     });
-    const includeUsers = matchedUsers.map(el => el._id);
-
-    const excludeParticpants = await getParticipantsIds(userId);
+    const matchedUsersIds = matchedUsers.map(el => el._id);
 
     const matchStage = {
       $match: {
         isPublic: true,
-        ownerId: { $in: includeUsers },
-        _id: { $nin: excludeParticpants },
+        ownerId: { $in: matchedUsersIds },
+      },
+    };
+    const unionMatchStage = {
+      $match: {
+        isPublic: true,
+        ownerId: { $nin: matchedUsersIds },
+        $text: { $search: filterQuery },
       },
     };
 
@@ -145,16 +149,7 @@ async function getJarsByFilter(req, res, next) {
       {
         $unionWith: {
           coll: 'baskets',
-          pipeline: [
-            {
-              $match: {
-                isPublic: true,
-                ownerId: { $nin: [userId, ...includeUsers] },
-                _id: { $nin: excludeParticpants },
-                $text: { $search: filterQuery },
-              },
-            },
-          ],
+          pipeline: [unionMatchStage],
         },
       },
       {
@@ -173,14 +168,7 @@ async function getJarsByFilter(req, res, next) {
         $unionWith: {
           coll: 'baskets',
           pipeline: [
-            {
-              $match: {
-                isPublic: true,
-                ownerId: { $nin: [userId, ...includeUsers] },
-                _id: { $nin: excludeParticpants },
-                $text: { $search: filterQuery },
-              },
-            },
+            unionMatchStage,
             {
               $sort: { score: { $meta: 'textScore' } },
             },
@@ -202,23 +190,24 @@ async function getJarsByFilter(req, res, next) {
       users: matchedUsers,
     });
   } catch (error) {
-    next(error);
+    next(
+      new HttpError(
+        `Couldn't perform search for public jars. Message: ${error.message}`,
+        500,
+      ),
+    );
   }
 }
 
 async function getUserJars(req, res, next) {
-  const userId = req.user?._id;
   const { userToFind } = req.query;
-  const sort = getSortSettings(req?.query?.sortOrder);
+  const sort = getSortSettings(req.query?.sortOrder);
 
   try {
-    const excludeParticpants = await getParticipantsIds(userId);
-
     const matchStage = {
       $match: {
         isPublic: true,
         ownerId: ObjectId(userToFind),
-        _id: { $nin: excludeParticpants },
       },
     };
 
@@ -250,7 +239,38 @@ async function getUserJars(req, res, next) {
       jars: [...jarsWithUser],
     });
   } catch (error) {
-    next(error);
+    next(
+      new HttpError(
+        `Couldn't fetch users public jars. Message: ${error.message}`,
+        500,
+      ),
+    );
+  }
+}
+
+async function getModalJar(req, res, next) {
+  const { jarToFind } = req.query;
+
+  try {
+    const modalJar = await Basket.aggregate([
+      {
+        $match: { isPublic: true, _id: ObjectId(jarToFind) },
+      },
+      ...lookupAndUnwind,
+    ]);
+
+    if (!modalJar.length) {
+      return next(new HttpError(`Couldnt find requested jar.`, 404));
+    }
+
+    res.status(200).json(...modalJar);
+  } catch (error) {
+    next(
+      new HttpError(
+        `Couldn't fetch modal public jar. Message: ${error.message}`,
+        500,
+      ),
+    );
   }
 }
 
@@ -258,4 +278,5 @@ module.exports = {
   getPublicJars,
   getJarsByFilter,
   getUserJars,
+  getModalJar,
 };
