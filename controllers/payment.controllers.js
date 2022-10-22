@@ -274,7 +274,7 @@ async function sendMoneyToBasket(req, res, next) {
   } catch (error) {
     logger.error('Can`t send Notification with Socket', error);
   }
-  logger.info('donation transaction success', {userId: _id, amount: value, recipientJarId: basketId})
+  logger.info('donation transaction success', {userId: _id, amount: `${value}`, recipientJarId: basketId})
   res.status(201).json({ mes: 'Donate successful' });
 }
 
@@ -403,7 +403,7 @@ async function receiveMoney(req, res, next) {
       comment: `Payouts from ${basket.name}`,
       card: paymentMethod.last4,
     });
-    logger.info('collection transaction success', { userId: req.user._id, amount: amount, senderJarId: basketId })
+    logger.info('collection transaction success', { userId: req.user._id, amount: `${amount}`, senderJarId: basketId })
     res.status(200).json(transaction.status);
   } catch (err) {
     const error = new HttpError(
