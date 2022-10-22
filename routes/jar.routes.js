@@ -52,7 +52,7 @@ router.put(
     ]),
   ],
   jarController.updateJar,
-)
+);
 
 router.put(
   '/update_jar_image',
@@ -61,7 +61,7 @@ router.put(
     check('image').not().isEmpty(),
   ],
   jarController.updateJarImage,
-)
+);
 
 //router.delete(
 //  '/delete_jar/:id',
@@ -72,12 +72,12 @@ router.get(
   '/get_jar_by_id',
   passport.authenticate('jwt', { session: false }),
   jarController.getJarById,
-)
+);
 
 router.get(
   '/get_jar_finance_by_id',
   passport.authenticate('jwt', { session: false }),
   jarController.getJarById,
-)
+);
 
 module.exports = router;
