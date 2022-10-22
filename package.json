@@ -27,6 +27,7 @@
     "firebase-admin": "^11.1.0",
     "handlebars": "^4.7.7",
     "mjml": "^4.13.0",
+    "moment": "^2.29.4",
     "mongoose": "^6.6.1",
     "mongoose-unique-validator": "^3.1.0",
     "morgan": "^1.10.0",

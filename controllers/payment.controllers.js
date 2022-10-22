@@ -248,7 +248,7 @@ async function sendMoneyToBasket(req, res, next) {
   }
 
   const notification = {
-    title: `${firstName} ${lastName}`,
+    title: `You have new donation from ${firstName} ${lastName}`,
     body: `${paymentIntent.amount / 100}$ on ${basket.name}`,
     image:
       'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',

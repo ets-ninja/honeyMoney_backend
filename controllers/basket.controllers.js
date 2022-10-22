@@ -225,6 +225,7 @@ async function createBasket(req, res, next) {
       expirationDate: req.body.expirationDate,
       isPublic: req.body.isPublic,
       creationDate: +new Date(),
+      notificationDate: +new Date(),
       image: req.body.photoTag,
       stripeId,
     });
