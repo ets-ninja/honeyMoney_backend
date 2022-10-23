@@ -92,7 +92,6 @@ async function newSetupIntent(req, res, next) {
       payment_method_types: ['card'],
     });
   } catch (err) {
-    logger.error(err)
     const error = new HttpError(
       'Could not save card. Please try again later',
       500,
