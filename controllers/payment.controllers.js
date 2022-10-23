@@ -98,7 +98,7 @@ async function newSetupIntent(req, res, next) {
     );
     return next(error);
   }
-  logger.info('The card was added successfully')
+  logger.info('The card was added successfully', { userId: req.user._id })
   res
     .status(201)
     .json({ id: setupIntent.id, client_secret: setupIntent.client_secret });
@@ -447,10 +447,18 @@ async function createConnectedAccount(req, res, next) {
     return next(error);
   }
 
-  await User.findOneAndUpdate(
-    { _id: req.user._id },
-    { connectedAccount: connectedAccount.id },
-  );
+  try{
+    await User.findOneAndUpdate(
+        { _id: req.user._id },
+        { connectedAccount: connectedAccount.id },
+      );
+  }catch(err){
+    const error = new HttpError(
+      'Could not create account. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
 
   let accountLink;
   try {
@@ -467,7 +475,7 @@ async function createConnectedAccount(req, res, next) {
     );
     return next(error);
   }
-  logger.info('connected account created successfuly')
+  logger.info('connected account created successfuly', { userId: _id })
   res.status(200).json(accountLink.url);
 }
 
