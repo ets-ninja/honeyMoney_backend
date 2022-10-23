@@ -15,7 +15,7 @@ body {
     rgba(0, 163, 255, 0.73) 100%
   );
   width: 100%;
-  height: 100vh;
+  height: 100%;
 }
 
 .container {
@@ -23,7 +23,6 @@ body {
   align-content: center;
   width: 100%;
   height: 100vh;
-
 }
 
 .modal {
@@ -70,8 +69,10 @@ body {
   grid-template-columns: auto 3fr;
 }
 
-.creator img {
-  padding-left: 20px;
+.prev img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
 }
 
 .prev h2 {
@@ -137,11 +138,9 @@ hr {
   max-width: 40vw;
   max-height: 60vh;
   min-width: 375px;
-  /* height: 100%; */
   min-height: 750px;
   border-radius: 0px 20px 20px 0px;
   margin: 0 auto;
-  /* row-gap: 15px; */
   background-color: #fff;
 }
 
@@ -250,13 +249,12 @@ a {
   justify-self: center;
   padding-top: 5px;
   text-align: end;
-  font-size: 10px;
+  font-size: 16px;
 }
 
 .error_input {
   border: 1px solid hsl(0, 100%, 74%);
   outline: none;
-  background: url('../images/icon-error.svg') center / contain no-repeat;
   background-position: 95%;
   background-size: 24px;
   }
@@ -264,6 +262,67 @@ a {
 .error_input::placeholder {
   color: hsl(0, 100%, 74%);
 }
+
+.input-wrapper {
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
+
+.successPage a {
+  margin: 10px;
+  border: 1px solid #78d23d;
+  color: #000;
+  background-color: #78d23d;
+}
+
+.successImg {
+  max-width: 500px;
+  width: 100vw;
+  min-width: 250px;
+  padding: 10px;
+}
+
+.successPage {
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.successPage a {
+  margin: 10px;
+  border: 1px solid #78d23d;
+  color: #000;
+  background-color: #78d23d;
+  justify-self: center;
+}
+
+.errorImg {
+  max-width: 500px;
+  width: 100vw;
+  min-width: 250px;
+  padding: 10px;
+}
+
+.errorPage {
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.errorPage a {
+  margin: 10px;
+  border: 1px solid hsl(0, 100%, 74%);
+  color: #000;
+  background-color: hsl(0, 100%, 74%);
+  justify-self: center;
+}
+
 
 @media screen and (max-width: 1150px){
   input {

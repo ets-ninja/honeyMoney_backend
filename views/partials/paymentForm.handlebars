@@ -1,24 +1,28 @@
-<form id='form' action="/basket/create-payment-intent" >
+<form id='form' action='/basket/create-payment-intent' method='post'>
   <p class='amount'>Top up amount</p>
   <div class='money_input'>
-    <input
-      type='text'
-      min='0.50'
-      onkeyup='changeValue(event)'
-      placeholder='How much you want to pay?'
-      id='amount'
-    />
-    <label for="amount" class="error"></label>
-    <div class='money_buttons'>
-      <button  type="button" onclick='setDonateAmount(50)'>+50$</button>
-      <button type="button" onclick='setDonateAmount(100)'>+100$</button>
-      <button type="button" onclick='setDonateAmount(150)'>+150$</button>
+    <div class='input-wrapper'>
+      <input
+        type='text'
+        min='0.50'
+        onkeyup='changeValue(event)'
+        placeholder='0'
+        id='amount'
+      />
+      <label for='amount' class='error'></label>
     </div>
-    <input type='text' placeholder='First name' id='userName' />
-    <label for="userName" class="error"></label>
+    <div class='money_buttons'>
+      <button type='button' onclick='setDonateAmount(50)'>+50$</button>
+      <button type='button' onclick='setDonateAmount(100)'>+100$</button>
+      <button type='button' onclick='setDonateAmount(150)'>+150$</button>
+    </div>
+    <div class='input-wrapper'>
+      <input type='text' placeholder='First name' id='userName' />
+      <label for='userName' class='error'></label>
+    </div>
   </div>
   <textarea
-  class="comment"
+    class='comment'
     placeholder='Comment'
     name=''
     id='comment'
@@ -26,9 +30,9 @@
     rows='10'
   ></textarea>
   <div class='buttons'>
-    <button type="submit" name="submit">Donate</button>
+    <button type='submit' id='donate-button'>Donate</button>
     <div>
-      <a href='http://localhost:3000/login?basketId={{{basketId}}}'>SingIn</a>
+      <a href='{{{path}}}/login/{{{basketId}}}'>SingIn</a>
       <a href='#'>SingUp</a>
     </div>
   </div>

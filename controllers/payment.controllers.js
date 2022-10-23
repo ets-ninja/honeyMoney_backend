@@ -27,6 +27,7 @@ const {
 const Transaction = require('../models/transaction.model');
 const Basket = require('../models/basket.model');
 const User = require('../models/user.model');
+const shareBankTransaction = require('../models/shareBankTransaction.model');
 
 // get customer balance
 async function getCustomerBalance(req, res, next) {
@@ -119,7 +120,9 @@ async function newPaymentIntent(req, res, next) {
     return next(error);
   }
 
-  const paymentMethod = paymentMethods.data.find(method => method.card.last4 === last4)?.id;
+  const paymentMethod = paymentMethods.data.find(
+    method => method.card.last4 === last4,
+  )?.id;
   if (!paymentMethod) {
     const error = new HttpError(
       "You don't have a card with this number. Please try again later",
@@ -193,7 +196,7 @@ async function sendMoneyToBasket(req, res, next) {
     });
   } catch (err) {
     createRefund({ paymentIntentId });
-    console.log(err)
+    console.log(err);
     const error = new HttpError(
       'Could not create transactions. Please try again later',
       500,
@@ -235,7 +238,7 @@ async function sendMoneyToBasket(req, res, next) {
     return next(error);
   }
 
-  res.status(201).json({status: 'success'});
+  res.status(201).json({ status: 'success' });
 }
 
 // get list of transactions
@@ -255,122 +258,122 @@ async function userTransactionsHistory(req, res, next) {
 }
 
 async function receiveMoney(req, res, next) {
-    const { connectedAccount } = req.user;
-    const { basketId } = req.body;
+  const { connectedAccount } = req.user;
+  const { basketId } = req.body;
 
-    let basket;
+  let basket;
   try {
     basket = await Basket.findOne({
       _id: basketId,
       ownerId: req.user._id,
     });
-    }catch(err){
-        const error = new HttpError(
-          'Could not find this basket. Please try again later.',
-          500,
-        );
-        return next(error);
-    }
+  } catch (err) {
+    const error = new HttpError(
+      'Could not find this basket. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
 
-    // some verification
-    if (!basket.ownerId.equals(req.user._id)) {
-      const error = new HttpError(
-        'Could not find your basket with this id',
-        500,
-      );
-      return next(error);
-    }
+  // some verification
+  if (!basket.ownerId.equals(req.user._id)) {
+    const error = new HttpError('Could not find your basket with this id', 500);
+    return next(error);
+  }
 
-    const amount = basket.value;
-    if (amount !== basket.goal) {
-      const error = new HttpError('Basket is not full yet.', 500);
-      return next(error);
-    }
-    if (!connectedAccount) {
-      const error = new HttpError(
-        'You should add an account to hold money first.',
-        500,
-      );
-      return next(error);
-    }
+  const amount = basket.value;
+  if (amount !== basket.goal) {
+    const error = new HttpError('Basket is not full yet.', 500);
+    return next(error);
+  }
+  if (!connectedAccount) {
+    const error = new HttpError(
+      'You should add an account to hold money first.',
+      500,
+    );
+    return next(error);
+  }
 
-    const amountInDollars = amount * 100;
-    let transfer;
-    try {
-      transfer = await createTransfer({
-        amount: amountInDollars,
-        destination: connectedAccount,
-      });
-    } catch (err) {
-      const error = new HttpError(
-        'Could not create transfer. Please try again later.',
-        500,
-      );
-      return next(error);
-    }
+  const amountInDollars = amount * 100;
+  let transfer;
+  try {
+    transfer = await createTransfer({
+      amount: amountInDollars,
+      destination: connectedAccount,
+    });
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create transfer. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
 
-    try {
-      await instantPayout({ amount: amountInDollars, destination: connectedAccount });
-    } catch (err) {
-      new HttpError(
-        "Sorry, your country doesn't support instant payouts. Stripe will send your funds to your bank account within a few days.",
-        500,
-      );
-    }
+  try {
+    await instantPayout({
+      amount: amountInDollars,
+      destination: connectedAccount,
+    });
+  } catch (err) {
+    new HttpError(
+      "Sorry, your country doesn't support instant payouts. Stripe will send your funds to your bank account within a few days.",
+      500,
+    );
+  }
 
-    try {
-      await changeBalance({
-        stripeUserId: basket.stripeId,
-        amount: amountInDollars,
-        description: `Payouts from ${basket.name}`,
-      });
-    } catch (err) {
-      const error = new HttpError(
-        'Could not send funds. Please try again later.',
-        500,
-      );
-      return next(error);
-    }
+  try {
+    await changeBalance({
+      stripeUserId: basket.stripeId,
+      amount: amountInDollars,
+      description: `Payouts from ${basket.name}`,
+    });
+  } catch (err) {
+    const error = new HttpError(
+      'Could not send funds. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
 
-    let paymentMethod;
-    try {
-      paymentMethod = await getConnectedCard({accountId: connectedAccount});
-    } catch (err) {
-      const error = new HttpError(
-        'Could find your card to send funds. Please try again later.',
-        500,
-      );
-      return next(error);
-    }
+  let paymentMethod;
+  try {
+    paymentMethod = await getConnectedCard({ accountId: connectedAccount });
+  } catch (err) {
+    const error = new HttpError(
+      'Could find your card to send funds. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
 
-    try{
-        basket.value -= amount;
-        await basket.save();
-    }catch(err){
-        const error = new HttpError(
-          'Could find your card to send funds. Please try again later.',
-          500,
-        );
-        return next(error);
-    }
+  try {
+    basket.value -= amount;
+    await basket.save();
+  } catch (err) {
+    const error = new HttpError(
+      'Could find your card to send funds. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
 
-    try{
-        const transaction = await createTransaction({
-          basketId: basket._id,
-          userId: req.user._id,
-          stripeId: transfer,
-          amount: amount,
-          comment: `Payouts from ${basket.name}`,
-          card: paymentMethod.last4,
-        });
-        res.status(200).json(transaction.status);
-    }catch(err){
-        const error = new HttpError(
-          'Could not create transaction. Please try again later.',
-          500,
-        );
-        return next(error);
-    }
+  try {
+    const transaction = await createTransaction({
+      basketId: basket._id,
+      userId: req.user._id,
+      stripeId: transfer,
+      amount: amount,
+      comment: `Payouts from ${basket.name}`,
+      card: paymentMethod.last4,
+    });
+    res.status(200).json(transaction.status);
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create transaction. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
 }
 
 async function createConnectedAccount(req, res, next) {
@@ -430,6 +433,90 @@ async function createConnectedAccount(req, res, next) {
   res.status(200).json(accountLink.url);
 }
 
+async function shareBankPayment(req, res) {
+  const items = req.body;
+
+  // console.log('items', items);
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: items.amount,
+    currency: 'usd',
+    payment_method_types: ['card'],
+    description: items.description,
+  });
+  res.send({
+    clientSecret: paymentIntent.client_secret,
+    paymentIntentId: paymentIntent.id,
+  });
+}
+
+async function sendMoneyToBasketWithShareBank(req, res, next) {
+  const { paymentIntentId, basketId, paymentIntent } = req.body;
+
+  let basket;
+  try {
+    basket = await Basket.findOne({ _id: basketId });
+  } catch (err) {
+    createRefund({ paymentIntentId });
+    res.redirect('/basket/error');
+    const error = new HttpError(
+      'Could find basket. Please try again later',
+      500,
+    );
+    return next(error);
+  }
+
+  // send money to basket
+  try {
+    await changeBalance({
+      stripeUserId: basket.stripeId,
+      amount: `-${paymentIntent.amount}`,
+      description: paymentIntent.description,
+    });
+  } catch (err) {
+    createRefund({ paymentIntentId });
+    res.redirect('/basket/error');
+    const error = new HttpError(
+      'Could not create transactions. Please try again later',
+      500,
+    );
+    return next(error);
+  }
+
+  // change basket value
+  let value = paymentIntent.amount / 100;
+  try {
+    basket.value += value;
+    await basket.save();
+  } catch (err) {
+    createRefund({ paymentIntentId });
+    const error = new HttpError(
+      'Could not create transactions. Please try again later',
+      500,
+    );
+    return next(error);
+  }
+  // console.log(paymentIntent)
+  try {
+    const newTransaction = await shareBankTransaction({
+      basketId,
+      stripeId: paymentIntent.id,
+      amount: paymentIntent.amount,
+      comment: paymentIntent.description || ' ',
+    });
+    await newTransaction.save();
+  } catch (err) {
+    console.log(err);
+    createRefund({ paymentIntentId });
+    const error = new HttpError(
+      'Could not create transactions. Please try again later',
+      500,
+    );
+    return next(error);
+  }
+
+  res.status(201).json({ status: 'success' });
+}
+
 module.exports = {
   getCustomerBalance,
   getCustomerCards,
@@ -439,4 +526,6 @@ module.exports = {
   receiveMoney,
   createConnectedAccount,
   sendMoneyToBasket,
+  shareBankPayment,
+  sendMoneyToBasketWithShareBank,
 };
