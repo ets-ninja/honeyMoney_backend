@@ -83,10 +83,10 @@ mongoose.connection.on('open', () => {
 });
 
 io.on('connection', socket => {
-  logger.info('a user connected ');
+  logger.debug('a user connected ');
 
   socket.on('join', async function (userId) {
-    logger.info(`User ${socket.id} joined the room ${userId}`);
+    logger.debug(`User ${socket.id} joined the room ${userId}`);
     socket.join(userId);
 
     const userBasketSoonToExpire = await getSoonToExpireBasket(userId);
@@ -102,7 +102,7 @@ io.on('connection', socket => {
 
   socket.on('leave', function () {
     socket.rooms.forEach(room => {
-      logger.info(`User ${socket.id} joined the room ${room}`);
+      logger.debug(`User ${socket.id} joined the room ${room}`);
       socket.leave(room);
     });
   });
@@ -112,7 +112,7 @@ io.on('connection', socket => {
   });
 
   socket.on('disconnect', () => {
-    logger.info('user disconnected');
+    logger.debug('user disconnected');
   });
 });
 
