@@ -57,11 +57,16 @@ levels.
 
 1. import logger in your file
 2. use required level and type your message as argument
+3. feel free to pass any aditional data as second argument object
 
 ```javascript
 const logger = require("./services/logger");
 
-  logger.error(New Error('message)) // will also log error stack trace
+  logger.error(New Error('message')) // will also log error stack trace
   logger.error('message');
+  logger.info('transaction success',{ userId: id,
+                                      amount: '200$',
+                                      recipientJarId: jarId, })
   logger.debug('message')
 ```
+

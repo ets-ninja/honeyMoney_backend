@@ -15,7 +15,7 @@ const transactionSchema = new Schema(
     },
     stripeId: { type: String, required: true },
     amount: { type: Number, required: true },
-    comment: { type: String, required: true, default: '' },
+    comment: { type: String, required: true, default: ' ' },
     card: { type: Number },
     status: { type: String, required: true, enum: ['succeeded', 'canceled'] },
   },

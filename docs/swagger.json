@@ -578,7 +578,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/WishlistItem"
+                "$ref": "#/components/schemas/CreateWishlistItem"
               }
             }
           }
@@ -590,7 +590,7 @@
               "application/json": {
                 "examples": {
                   "success": {
-                    "value": "{\n \"id\": \"wishlist item id\",\n \"message\": \"New wishlist item created\"\n}\n"
+                    "value": "{\n \"id\": \"wishlist item id\"}\n"
                   }
                 }
               }
@@ -609,20 +609,34 @@
             }
           }
         }
-      },
+      }
+    },
+    "/wishlist/get-item/{itemId}": {
       "get": {
-        "summary": "Get all items from the user's wishlist",
+        "summary": "Get single item from the user's wishlist",
         "tags": ["Wishlist"],
         "security": {
           "bearerAuth": []
         },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "itemId",
+            "description": "User's wishlist item id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "required": true
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "200 response. OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseWishlistItems"
+                  "$ref": "#/components/schemas/WishlistItem"
                 }
               }
             }
@@ -630,7 +644,62 @@
         }
       }
     },
-    "/wishlist/update/{wishlistItemId}": {
+    "/wishlist/sorting": {
+      "get": {
+        "summary": "Get sorted items from the user's wishlist",
+        "tags": ["Wishlist"],
+        "security": {
+          "bearerAuth": []
+        },
+        "parameters": [
+          {
+            "in": "query ",
+            "name": "page",
+            "description": "Active page",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "required": true
+            }
+          },
+          {
+            "in": "query ",
+            "name": "field",
+            "description": "Sorting field (createdAt, finalGoal)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "required": true
+            }
+          },
+          {
+            "in": "query ",
+            "name": "order",
+            "description": "Order for items sorting (-1, 1)",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "required": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response. OK",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "invalid_ids": {
+                    "value": "{\n \"pagination\": {\n \"countItems\": \"Total count of user's items\",\n \"pageCount\": \"Total count of pages\" \n},\n \"sortedItems\": \" All sorted items on page \" \n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/wishlist/update/{itemId}": {
       "patch": {
         "summary": "Update info of item in wishlist",
         "tags": ["Wishlist"],
@@ -640,7 +709,7 @@
         "parameters": [
           {
             "in": "path",
-            "name": "wishlistItemId",
+            "name": "itemId",
             "description": "User's wishlist item id",
             "required": true,
             "schema": {
@@ -665,7 +734,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResponseWishlistItems"
+                  "$ref": "#/components/schemas/WishlistItem"
                 }
               }
             }
@@ -685,7 +754,7 @@
         }
       }
     },
-    "/wishlist/delete/{wishlistItemId}": {
+    "/wishlist/delete/{itemId}": {
       "delete": {
         "summary": "Delete item from the user's wishlist",
         "tags": ["Wishlist"],
@@ -695,7 +764,7 @@
         "parameters": [
           {
             "in": "path",
-            "name": "wishlistItemId",
+            "name": "itemId",
             "description": "User's wishlist item id",
             "required": true,
             "schema": {
@@ -711,7 +780,7 @@
               "application/json": {
                 "examples": {
                   "success": {
-                    "value": "{\n \"message\": \"Wishlist item deleted\"\n}\n"
+                    "value": "{\n \"message\": \"Wish item deleted successfully\"\n}\n"
                   }
                 }
               }
@@ -891,6 +960,44 @@
           }
         }
       }
+    },
+    "notification/send_notification_cos_expr": {
+      "post": {
+        "summary": "Get notifications from jars that's will expire soon.",
+        "tags": ["Notification"],
+        "security": {
+          "bearerAuth": []
+        },
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "success": {
+                    "value": "{\n \"message\": \"Notification successfully sent.\"\n}\n"
+                  },
+                  "user_dont_have_notification_token": {
+                    "value": "{\n \"message\": \"User haven`t got a notification token.\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 response. Internal Server Error",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "db_error": {
+                    "value": "{\n \"message\": \"Search failed, please try again later.\"\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -981,6 +1088,32 @@
           },
           "finalGoal": {
             "type": "number"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateWishlistItem": {
+        "type": "object",
+        "required": ["name", "finalGoal"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "image": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "finalGoal": {
+            "type": "number"
           }
         }
       },
@@ -988,37 +1121,20 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 80
           },
           "image": {
             "type": "string"
           },
           "description": {
             "type": "string",
-            "maxLength": 255
+            "maxLength": 1000
           },
           "finalGoal": {
             "type": "number"
           }
         }
-      },
-      "ResponseWishlistItems": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/WishlistItem"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "createdAt": {
-                "type": "string"
-              },
-              "id": {
-                "type": "string"
-              }
-            }
-          }
-        ]
       }
     },
     "securitySchemes": {

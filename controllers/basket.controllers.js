@@ -263,44 +263,7 @@ async function getBasketById(req, res, next) {
   res.status(200).json({ basket: basket });
 }
 
-async function shareBasket(req, res, next) {
-  const basket = await Basket.findOne({ _id: req.params.id });
-  const owner = await User.findOne({ _id: basket.ownerId });
 
-  try {
-    if (basket.isPublic === false) {
-      return next(new HttpError('This basket is not public', 404));
-    }
-
-    Handlebars.registerHelper('setPublicKey', () => {
-      return process.env.STRIPE_PK_TEST
-    })
-
-
-    Handlebars.registerHelper('setApiHost', () => {
-      return process.env.API_URL
-    })
-
-    res.render('index', {
-      basketId: req.params.id,
-      basketName: basket.name,
-      description: basket.description,
-      accumulated: basket.value,
-      goal: basket.goal,
-      basketPhoto: basket.image,
-      userName: owner.firstName,
-      userPhoto: owner.userPhoto,
-      path: process.env.APP_URL,
-    });
-  } catch (error) {
-    return next(
-      new HttpError(
-        `Error when creating a basket appeared. Message: ${error.message}`,
-        500,
-      ),
-    );
-  }
-}
 
 module.exports = {
   getOwnerBaskets,
@@ -311,5 +274,4 @@ module.exports = {
   updateBasket,
   deleteBasket,
   getBasketById,
-  shareBasket,
 };

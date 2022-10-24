@@ -1,30 +1,22 @@
 var admin = require('firebase-admin');
 
 var serviceAccount = require('../../honeymoneyworker-firebase-adminsdk-4ru0p-4db0149331.json');
+const logger = require('../logger');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: process.env.FIREBASE_DATABASE_URL,
 });
 
-const sendMessage = async userTokens => {
+const sendMessage = async (tokens, data, notification) => {
   try {
     await admin.messaging().sendMulticast({
-      data: {
-        title: 'Hello',
-        body: 'World',
-        clickAction: 'http://localhost:3000/myjars',
-      },
-      notification: {
-        title: 'Alex Ordynski',
-        body: '101$ on medicines jar',
-        image:
-          'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
-      },
-      tokens: userTokens,
+      data,
+      notification,
+      tokens,
     });
   } catch (error) {
-    throw new Error(error.message);
+    logger.error('Cant send Notification with FCM', error);
   }
 };
 

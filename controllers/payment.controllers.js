@@ -1,4 +1,6 @@
 require('dotenv').config();
+const { v4: uuidv4 } = require('uuid');
+const logger = require('../services/logger');
 const HttpError = require('../utils/http-error');
 
 const stripe = require('stripe')(process.env.STRIPE_SK_TEST);
@@ -25,8 +27,9 @@ const {
 
 // entities
 const Transaction = require('../models/transaction.model');
-const Basket = require('../models/basket.model');
+const Jar = require('../models/jar.model');
 const User = require('../models/user.model');
+const sendMessage = require('../services/notifications');
 const shareBankTransaction = require('../models/shareBankTransaction.model');
 
 // get customer balance
@@ -96,6 +99,7 @@ async function newSetupIntent(req, res, next) {
     );
     return next(error);
   }
+  logger.info('The card was added successfully', { userId: req.user._id });
   res
     .status(201)
     .json({ id: setupIntent.id, client_secret: setupIntent.client_secret });
@@ -112,7 +116,6 @@ async function newPaymentIntent(req, res, next) {
       type: 'card',
     });
   } catch (err) {
-    console.log(err);
     const error = new HttpError(
       'Could not find your card. Please try again later',
       500,
@@ -148,7 +151,6 @@ async function newPaymentIntent(req, res, next) {
       client_secret: paymentIntent.client_secret,
     };
   } catch (err) {
-    console.log(err);
     const error = new HttpError(
       'Could not create payment. Please try again later',
       500,
@@ -160,12 +162,12 @@ async function newPaymentIntent(req, res, next) {
 
 // calls when payment intent succeeded maybe shoud be merged with PaymentIntent func
 async function sendMoneyToBasket(req, res, next) {
-  const { _id } = req.user;
+  const { _id, firstName, lastName } = req.user;
   const { paymentIntentId, basketId } = req.body;
 
   let basket;
   try {
-    basket = await Basket.findOne({ _id: basketId });
+    basket = await Jar.findOne({ _id: basketId });
   } catch (err) {
     createRefund({ paymentIntentId });
     const error = new HttpError(
@@ -192,11 +194,10 @@ async function sendMoneyToBasket(req, res, next) {
     await changeBalance({
       stripeUserId: basket.stripeId,
       amount: `-${paymentIntent.amount}`,
-      description: paymentIntentId.description,
+      description: paymentIntent.description,
     });
   } catch (err) {
     createRefund({ paymentIntentId });
-    console.log(err);
     const error = new HttpError(
       'Could not create transactions. Please try again later',
       500,
@@ -225,7 +226,7 @@ async function sendMoneyToBasket(req, res, next) {
       userId: _id,
       stripeId: paymentIntent.id,
       amount: paymentIntent.amount,
-      comment: paymentIntent.description,
+      comment: paymentIntent.description || ' ',
       card: paymentIntent.charges.data[0].payment_method_details.card.last4,
     });
     await newTransaction.save();
@@ -238,7 +239,47 @@ async function sendMoneyToBasket(req, res, next) {
     return next(error);
   }
 
-  res.status(201).json({ status: 'success' });
+  let owner;
+  try {
+    owner = await User.findOne({ _id: basket.ownerId });
+  } catch (error) {
+    logger.error('Cant send Notification');
+  }
+
+  const notification = {
+    title: `You have new donation from ${firstName} ${lastName}`,
+    body: `${paymentIntent.amount / 100}$ on ${basket.name}`,
+    image:
+      'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
+  };
+  const data = {
+    clickAction: `jar/${basketId}`,
+    clickActionBack: `${process.env.APP_URL}/jar/${basketId}`,
+  };
+
+  if (owner.notificationTokens.length > 0) {
+    try {
+      await sendMessage(owner.notificationTokens, data, notification);
+    } catch (error) {
+      logger.error('Can`t send Notification with FCM', error);
+    }
+  }
+
+  try {
+    await req.io.in(owner.id).emit('message', {
+      messageId: uuidv4(),
+      notification,
+      data,
+    });
+  } catch (error) {
+    logger.error('Can`t send Notification with Socket', error);
+  }
+  logger.info('donation transaction success', {
+    userId: _id,
+    amount: `${value}`,
+    recipientJarId: basketId,
+  });
+  res.status(201).json({ mes: 'Donate successful' });
 }
 
 // get list of transactions
@@ -263,7 +304,7 @@ async function receiveMoney(req, res, next) {
 
   let basket;
   try {
-    basket = await Basket.findOne({
+    basket = await Jar.findOne({
       _id: basketId,
       ownerId: req.user._id,
     });
@@ -282,7 +323,7 @@ async function receiveMoney(req, res, next) {
   }
 
   const amount = basket.value;
-  if (amount !== basket.goal) {
+  if (amount < basket.goal) {
     const error = new HttpError('Basket is not full yet.', 500);
     return next(error);
   }
@@ -366,6 +407,11 @@ async function receiveMoney(req, res, next) {
       comment: `Payouts from ${basket.name}`,
       card: paymentMethod.last4,
     });
+    logger.info('collection transaction success', {
+      userId: req.user._id,
+      amount: `${amount}`,
+      senderJarId: basketId,
+    });
     res.status(200).json(transaction.status);
   } catch (err) {
     const error = new HttpError(
@@ -410,10 +456,18 @@ async function createConnectedAccount(req, res, next) {
     return next(error);
   }
 
-  await User.findOneAndUpdate(
-    { _id: req.user._id },
-    { connectedAccount: connectedAccount.id },
-  );
+  try {
+    await User.findOneAndUpdate(
+      { _id: req.user._id },
+      { connectedAccount: connectedAccount.id },
+    );
+  } catch (err) {
+    const error = new HttpError(
+      'Could not create account. Please try again later.',
+      500,
+    );
+    return next(error);
+  }
 
   let accountLink;
   try {
@@ -430,6 +484,7 @@ async function createConnectedAccount(req, res, next) {
     );
     return next(error);
   }
+  logger.info('connected account created successfuly', { userId: _id });
   res.status(200).json(accountLink.url);
 }
 
