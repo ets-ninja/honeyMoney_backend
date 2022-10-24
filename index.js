@@ -87,11 +87,11 @@ io.on('connection', socket => {
 
   socket.on('join', async function (userId) {
     logger.debug(`User ${socket.id} joined the room ${userId}`);
-    socket.join(userId);
+    await socket.join(userId);
 
     const userBasketSoonToExpire = await getSoonToExpireBasket(userId);
 
-    userBasketSoonToExpire.forEach(async ({ notification, data }) => {
+    userBasketSoonToExpire.forEach(({ notification, data }) => {
       io.in(userId).emit('message', {
         messageId: uuidv4(),
         notification,
