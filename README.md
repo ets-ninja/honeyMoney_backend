@@ -61,7 +61,7 @@ levels.
 ```javascript
 const logger = require("./services/logger");
 
-  logger.error(New Error('message)) // will also log error stack trace
+  logger.error(New Error('message')) // will also log error stack trace
   logger.error('message');
   logger.debug('message')
 ```
