@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const basketController = require('../controllers/basket.controllers');
+const jarController = require('../controllers/jar.controllers');
 
-router.get('/share-bank/:id', basketController.shareBasket);
+router.get('/share-bank/:id', jarController.shareBasket);
 
 router.get('/success/:param', (req, res) => {
   res.render('success');
