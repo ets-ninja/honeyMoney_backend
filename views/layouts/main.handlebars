@@ -11,6 +11,10 @@
     <div class='container'>
       {{{body}}}
     </div>
+    <script>
+      window.publicKey = '{{setPublicKey}}'
+      window.apiHost = '{{setApiHost}}'
+    </script>
     <script src='https://js.stripe.com/v3/'></script>
     <script src='/index.js'></script>
   </body>

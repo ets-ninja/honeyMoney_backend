@@ -1,6 +1,4 @@
-const stripe = Stripe(
-  'pk_test_51LlgddKPhPFjc58J31VCe6tDBvpabqjvZQ7caoM878BaF7QEpCGb3cnRBXpAp2ietjsbAQJRUV8RATlvdgT3qGlT00Il1uonIP',
-);
+const stripe = Stripe(publicKey);
 const userName = document.getElementById('userName');
 const description = document.getElementById('comment');
 const amount = document.getElementById('amount');
@@ -10,6 +8,8 @@ const form = document.getElementById('form');
 const setDonateAmount = count => {
   amount.value = +amount.value + count;
 };
+
+console.log(publicKey)
 
 let price = '';
 const changeValue = e => {
@@ -140,7 +140,7 @@ async function handleSubmit(e) {
   const { error } = await stripe.confirmPayment({
     elements,
     confirmParams: {
-      return_url: 'http://localhost:5050/basket/success/:param',
+      return_url: `${apiHost}/basket/success/:param`,
     },
   });
 

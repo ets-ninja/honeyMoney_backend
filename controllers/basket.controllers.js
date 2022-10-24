@@ -11,6 +11,7 @@ const Participants = require('../models/participant.model');
 const {
   createCustomer,
 } = require('../services/stripe/create-customer.service');
+const Handlebars = require('handlebars')
 const onePageLimit = 12;
 
 const getOrderArgs = order => {
@@ -270,6 +271,15 @@ async function shareBasket(req, res, next) {
     if (basket.isPublic === false) {
       return next(new HttpError('This basket is not public', 404));
     }
+
+    Handlebars.registerHelper('setPublicKey', () => {
+      return process.env.STRIPE_PK_TEST
+    })
+
+
+    Handlebars.registerHelper('setApiHost', () => {
+      return process.env.API_URL
+    })
 
     res.render('index', {
       basketId: req.params.id,
