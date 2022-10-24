@@ -9,8 +9,6 @@ const setDonateAmount = count => {
   amount.value = +amount.value + count;
 };
 
-console.log(publicKey)
-
 let price = '';
 const changeValue = e => {
   const newValue = event.target.value;
@@ -195,11 +193,11 @@ async function checkStatus() {
 function showMessage(messageText) {
   const messageContainer = document.querySelector('#payment-message');
 
-  messageContainer.classList.remove('hidden');
-  messageContainer.textContent = messageText;
+  messageContainer?.classList.remove('hidden');
+  messageContainer?.textContent = messageText;
 
   setTimeout(function () {
-    messageContainer.classList.add('hidden');
+    messageContainer?.classList.add('hidden');
     messageText.textContent = '';
   }, 4000);
 }

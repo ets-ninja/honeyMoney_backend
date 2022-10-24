@@ -491,7 +491,7 @@ async function createConnectedAccount(req, res, next) {
 async function shareBankPayment(req, res) {
   const items = req.body;
 
-  // console.log('items', items);
+  console.log('items', items);
   const paymentIntent = await stripe.paymentIntents.create({
     amount: items.amount,
     currency: 'usd',
