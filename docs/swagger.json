@@ -960,6 +960,44 @@
           }
         }
       }
+    },
+    "notification/send_notification_cos_expr": {
+      "post": {
+        "summary": "Get notifications from jars that's will expire soon.",
+        "tags": ["Notification"],
+        "security": {
+          "bearerAuth": []
+        },
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "success": {
+                    "value": "{\n \"message\": \"Notification successfully sent.\"\n}\n"
+                  },
+                  "user_dont_have_notification_token": {
+                    "value": "{\n \"message\": \"User haven`t got a notification token.\"\n}\n"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500 response. Internal Server Error",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "db_error": {
+                    "value": "{\n \"message\": \"Search failed, please try again later.\"\n}\n"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

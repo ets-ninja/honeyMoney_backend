@@ -5,9 +5,14 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const mongoose = require('mongoose');
-const HttpError = require('./utils/http-error');
+const { v4: uuidv4 } = require('uuid');
+
+//Middlewares
 const passport = require('./middlewares/passport.middleware');
 const morganMiddleware = require('./middlewares/morgan.middleware');
+
+//Utils && Services
+const HttpError = require('./utils/http-error');
 const logger = require('./services/logger');
 
 // Consts
@@ -23,6 +28,8 @@ const docsRoute = require('./routes/api-docs.routes');
 const jarRoutes = require('./routes/jar.routes');
 const payRoutes = require('./routes/payment.routes');
 const publicRoutes = require('./routes/public.routes');
+const notificationsRoutes = require('./routes/notification.routes');
+const getSoonToExpireJar = require('./services/notifications/getSoonToExpireJar');
 
 const app = express();
 const server = http.createServer(app);
@@ -53,6 +60,7 @@ app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/api_docs', docsRoute);
 app.use('/api/payment', payRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/notification', notificationsRoutes);
 
 // 404 Route should be at the end of all routes
 app.use((req, res, next) => {
@@ -75,16 +83,26 @@ mongoose.connection.on('open', () => {
 });
 
 io.on('connection', socket => {
-  logger.info('a user connected ');
+  logger.debug('a user connected ');
 
-  socket.on('join', function (room) {
-    logger.info(`User ${socket.id} joined the room ${room}`);
-    socket.join(room);
+  socket.on('join', async function (userId) {
+    logger.debug(`User ${socket.id} joined the room ${userId}`);
+    await socket.join(userId);
+
+    const userJarSoonToExpire = await getSoonToExpireJar(userId);
+
+    userJarSoonToExpire.forEach(({ notification, data }) => {
+      io.in(userId).emit('message', {
+        messageId: uuidv4(),
+        notification,
+        data,
+      });
+    });
   });
 
   socket.on('leave', function () {
     socket.rooms.forEach(room => {
-      logger.info(`User ${socket.id} joined the room ${room}`);
+      logger.debug(`User ${socket.id} joined the room ${room}`);
       socket.leave(room);
     });
   });
@@ -94,7 +112,7 @@ io.on('connection', socket => {
   });
 
   socket.on('disconnect', () => {
-    logger.info('user disconnected');
+    logger.debug('user disconnected');
   });
 });
 

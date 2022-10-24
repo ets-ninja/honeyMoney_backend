@@ -98,7 +98,7 @@ async function newSetupIntent(req, res, next) {
     );
     return next(error);
   }
-  logger.info('The card was added successfully', { userId: req.user._id })
+  logger.info('The card was added successfully', { userId: req.user._id });
   res
     .status(201)
     .json({ id: setupIntent.id, client_secret: setupIntent.client_secret });
@@ -246,14 +246,14 @@ async function sendMoneyToBasket(req, res, next) {
   }
 
   const notification = {
-    title: `${firstName} ${lastName}`,
+    title: `You have new donation from ${firstName} ${lastName}`,
     body: `${paymentIntent.amount / 100}$ on ${basket.name}`,
     image:
       'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
   };
   const data = {
-    clickAction: `basket/${basketId}`,
-    clickActionBack: `${process.env.APP_URL}/basket/${basketId}`,
+    clickAction: `jar/${basketId}`,
+    clickActionBack: `${process.env.APP_URL}/jar/${basketId}`,
   };
 
   if (owner.notificationTokens.length > 0) {
@@ -273,7 +273,11 @@ async function sendMoneyToBasket(req, res, next) {
   } catch (error) {
     logger.error('Can`t send Notification with Socket', error);
   }
-  logger.info('donation transaction success', {userId: _id, amount: `${value}`, recipientJarId: basketId})
+  logger.info('donation transaction success', {
+    userId: _id,
+    amount: `${value}`,
+    recipientJarId: basketId,
+  });
   res.status(201).json({ mes: 'Donate successful' });
 }
 
@@ -402,7 +406,11 @@ async function receiveMoney(req, res, next) {
       comment: `Payouts from ${basket.name}`,
       card: paymentMethod.last4,
     });
-    logger.info('collection transaction success', { userId: req.user._id, amount: `${amount}`, senderJarId: basketId })
+    logger.info('collection transaction success', {
+      userId: req.user._id,
+      amount: `${amount}`,
+      senderJarId: basketId,
+    });
     res.status(200).json(transaction.status);
   } catch (err) {
     const error = new HttpError(
@@ -447,12 +455,12 @@ async function createConnectedAccount(req, res, next) {
     return next(error);
   }
 
-  try{
+  try {
     await User.findOneAndUpdate(
-        { _id: req.user._id },
-        { connectedAccount: connectedAccount.id },
-      );
-  }catch(err){
+      { _id: req.user._id },
+      { connectedAccount: connectedAccount.id },
+    );
+  } catch (err) {
     const error = new HttpError(
       'Could not create account. Please try again later.',
       500,
@@ -475,7 +483,7 @@ async function createConnectedAccount(req, res, next) {
     );
     return next(error);
   }
-  logger.info('connected account created successfuly', { userId: _id })
+  logger.info('connected account created successfuly', { userId: _id });
   res.status(200).json(accountLink.url);
 }
 
