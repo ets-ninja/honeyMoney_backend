@@ -27,7 +27,7 @@ const {
 
 // entities
 const Transaction = require('../models/transaction.model');
-const Basket = require('../models/basket.model');
+const Jar = require('../models/jar.model');
 const User = require('../models/user.model');
 const sendMessage = require('../services/notifications');
 
@@ -166,7 +166,7 @@ async function sendMoneyToBasket(req, res, next) {
 
   let basket;
   try {
-    basket = await Basket.findOne({ _id: basketId });
+    basket = await Jar.findOne({ _id: basketId });
   } catch (err) {
     createRefund({ paymentIntentId });
     const error = new HttpError(
@@ -299,7 +299,7 @@ async function receiveMoney(req, res, next) {
 
   let basket;
   try {
-    basket = await Basket.findOne({
+    basket = await Jar.findOne({
       _id: basketId,
       ownerId: req.user._id,
     });

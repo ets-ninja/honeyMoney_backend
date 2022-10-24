@@ -20,7 +20,7 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const wishlistRoutes = require('./routes/wishlist.routes');
 const docsRoute = require('./routes/api-docs.routes');
-const basketRoutes = require('./routes/basket.routes');
+const jarRoutes = require('./routes/jar.routes');
 const payRoutes = require('./routes/payment.routes');
 const publicRoutes = require('./routes/public.routes');
 
@@ -48,7 +48,7 @@ app.use((req, res, next) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/basket', basketRoutes);
+app.use('/api/jar', jarRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/api_docs', docsRoute);
 app.use('/api/payment', payRoutes);
