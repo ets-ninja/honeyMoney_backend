@@ -25,11 +25,11 @@ const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
 const wishlistRoutes = require('./routes/wishlist.routes');
 const docsRoute = require('./routes/api-docs.routes');
-const basketRoutes = require('./routes/basket.routes');
+const jarRoutes = require('./routes/jar.routes');
 const payRoutes = require('./routes/payment.routes');
 const publicRoutes = require('./routes/public.routes');
 const notificationsRoutes = require('./routes/notification.routes');
-const getSoonToExpireBasket = require('./services/notifications/getSoonToExpireBasket');
+const getSoonToExpireJar = require('./services/notifications/getSoonToExpireJar');
 
 const app = express();
 const server = http.createServer(app);
@@ -55,7 +55,7 @@ app.use((req, res, next) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/basket', basketRoutes);
+app.use('/api/jar', jarRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/api_docs', docsRoute);
 app.use('/api/payment', payRoutes);
@@ -73,7 +73,7 @@ app.use((error, req, res, next) => {
   if (res.headerSent) {
     return next(error);
   }
-  logger.http(error);
+  logger.error(error);
   res.status(error.code || 500);
   res.json({ message: error.message || 'Unknown server error' });
 });
@@ -89,9 +89,9 @@ io.on('connection', socket => {
     logger.debug(`User ${socket.id} joined the room ${userId}`);
     await socket.join(userId);
 
-    const userBasketSoonToExpire = await getSoonToExpireBasket(userId);
+    const userJarSoonToExpire = await getSoonToExpireJar(userId);
 
-    userBasketSoonToExpire.forEach(({ notification, data }) => {
+    userJarSoonToExpire.forEach(({ notification, data }) => {
       io.in(userId).emit('message', {
         messageId: uuidv4(),
         notification,

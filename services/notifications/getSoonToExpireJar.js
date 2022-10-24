@@ -1,15 +1,15 @@
 const moment = require('moment');
 
-const Basket = require('../../models/basket.model');
+const Jar = require('../../models/jar.model');
 const logger = require('../logger');
 
-const getSoonToExpireBasket = async userId => {
+const getSoonToExpireJar = async userId => {
   const startOfTheDay = moment().startOf('day');
   const endOf7DayFromNow = moment().add(7, 'days').endOf('day').toISOString();
 
   let jars, notificationArr;
   try {
-    jars = await Basket.find({
+    jars = await Jar.find({
       ownerId: userId,
       expirationDate: {
         $gte: new Date(startOfTheDay).getTime(),
@@ -40,8 +40,8 @@ const getSoonToExpireBasket = async userId => {
             'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
         },
         data: {
-          clickAction: `basket/${jar._id}`,
-          clickActionBack: `${process.env.APP_URL}/basket/${jar._id}`,
+          clickAction: `Jar/${jar._id}`,
+          clickActionBack: `${process.env.APP_URL}/Jar/${jar._id}`,
         },
       };
     });
@@ -52,4 +52,4 @@ const getSoonToExpireBasket = async userId => {
   return notificationArr;
 };
 
-module.exports = getSoonToExpireBasket;
+module.exports = getSoonToExpireJar;

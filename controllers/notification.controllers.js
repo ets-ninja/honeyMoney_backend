@@ -4,7 +4,7 @@ const moment = require('moment');
 const { ERR } = require('../constants');
 
 //Models
-const Basket = require('../models/basket.model');
+const Jar = require('../models/jar.model');
 
 //Services
 const logger = require('../services/logger');
@@ -19,7 +19,7 @@ async function sendNotificationCosExpire(req, res, next) {
 
     let jars;
     try {
-      jars = await Basket.find({
+      jars = await Jar.find({
         ownerId: _id,
         expirationDate: {
           $gte: new Date(startOfTheDay).getTime(),
@@ -54,8 +54,8 @@ async function sendNotificationCosExpire(req, res, next) {
           'https://static.vecteezy.com/system/resources/previews/002/521/570/original/cartoon-cute-bee-holding-a-honey-comb-signboard-showing-victory-hand-vector.jpg',
       };
       const data = {
-        clickAction: `basket/${jar?._id}`,
-        clickActionBack: `${process.env.APP_URL}/basket/${jar?._id}`,
+        clickAction: `jar/${jar?._id}`,
+        clickActionBack: `${process.env.APP_URL}/jar/${jar?._id}`,
       };
 
       try {

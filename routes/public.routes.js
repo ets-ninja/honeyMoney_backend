@@ -4,6 +4,7 @@ const {
   getPublicJars,
   getJarsByFilter,
   getUserJars,
+  getModalJar,
 } = require('../controllers/public.controllers');
 
 const router = express.Router();
@@ -24,6 +25,12 @@ router.get(
   '/user',
   passport.authenticate('jwt', { session: false }),
   getUserJars,
+);
+
+router.get(
+  '/modal',
+  passport.authenticate('jwt', { session: false }),
+  getModalJar,
 );
 
 module.exports = router;
