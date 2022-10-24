@@ -198,7 +198,8 @@ async function confirmUserEmail(req, res, next) {
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
     maxAge: 604800000,
     httpOnly: true,
-    sameSite: false,
+    sameSite: 'None',
+    secure: true,
   });
   res.status(200).json({
     user: user.toObject({ getters: true }),
