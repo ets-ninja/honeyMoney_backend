@@ -70,6 +70,7 @@ async function loginUser(req, res, next) {
     .cookie(REFRESH_COOKIE_NAME, refreshToken, {
       maxAge: 604800000,
       httpOnly: true,
+      sameSite: false,
     })
     .status(200)
     .json({
@@ -207,6 +208,7 @@ async function googleLogin(req, res, next) {
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
     maxAge: 604800000,
     httpOnly: true,
+    sameSite: false,
   });
   res.status(301).redirect(`${process.env.APP_URL}`);
 }
