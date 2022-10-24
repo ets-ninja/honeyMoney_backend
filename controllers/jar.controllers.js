@@ -16,20 +16,21 @@ const onePageLimit = 12;
 
 const getOrderArgs = order => {
   switch (order) {
-    case 'Newest to oldest':
+    case 'creation asc':
       return { creationDate: 1, _id: 1 };
-    case 'Oldest to newest':
+    case 'creation desc':
       return { creationDate: -1, _id: 1 };
-    case 'Expensive to cheap':
+    case 'goal desc':
       return { goal: -1, _id: 1 };
-    case 'Cheap to expensive':
+    case 'goal asc':
       return { goal: 1, _id: 1 };
-    case 'Soon to expire':
+    case 'expiration asc':
       return { expirationDate: 1, _id: 1 };
-    case 'Far to expire':
+    case 'expiration desc':
       return { expirationDate: -1, _id: 1 };
+    default:
+      return '';
   }
-  return '';
 };
 
 async function getOwnerJars(req, res, next) {
@@ -58,6 +59,7 @@ async function getOwnerJars(req, res, next) {
           as: 'user',
         },
       },
+      { $set: { user: { $first: '$user' } } },
     ]);
   } catch (error) {
     const err = new HttpError(
@@ -110,6 +112,7 @@ async function getCoownerJars(req, res, next) {
           as: 'user',
         },
       },
+      { $set: { user: { $first: '$user' } } },
     ]);
   } catch (error) {
     return next(error);
@@ -177,6 +180,7 @@ async function getPublicJars(req, res, next) {
           as: 'user',
         },
       },
+      { $set: { user: { $first: '$user' } } },
     ]);
   } catch (error) {
     return next(error);
@@ -241,6 +245,7 @@ async function getPrivateJars(req, res, next) {
           as: 'user',
         },
       },
+      { $set: { user: { $first: '$user' } } },
     ]);
   } catch (error) {
     return next(error);
