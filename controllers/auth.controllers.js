@@ -265,7 +265,11 @@ async function logoutUser(req, res, next) {
   }
 
   res
-    .clearCookie(REFRESH_COOKIE_NAME)
+    .clearCookie(REFRESH_COOKIE_NAME, {
+      httpOnly: true,
+      sameSite: 'None',
+      secure: true,
+    })
     .status(200)
     .json({ message: 'Logout succesful' });
 }
