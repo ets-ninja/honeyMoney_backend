@@ -509,7 +509,7 @@ async function sendMoneyToBasketWithShareBank(req, res, next) {
 
   let basket;
   try {
-    basket = await Basket.findOne({ _id: basketId });
+    basket = await Jar.findOne({ _id: basketId });
   } catch (err) {
     createRefund({ paymentIntentId });
     res.redirect('/basket/error');
@@ -520,7 +520,6 @@ async function sendMoneyToBasketWithShareBank(req, res, next) {
     return next(error);
   }
 
-  // send money to basket
   try {
     await changeBalance({
       stripeUserId: basket.stripeId,
