@@ -32,6 +32,7 @@ const User = require('../models/user.model');
 const sendMessage = require('../services/notifications');
 const shareBankTransaction = require('../models/shareBankTransaction.model');
 
+
 // get customer balance
 async function getCustomerBalance(req, res, next) {
   const { stripeUserId } = req.user;

@@ -16,6 +16,7 @@ const HttpError = require('./utils/http-error');
 const logger = require('./services/logger');
 const expressHandlebars = require('express-handlebars');
 const path = require('path');
+
 // Consts
 const APP_URL = process.env.APP_URL;
 const PORT = process.env.PORT;
@@ -40,8 +41,6 @@ const io = new Server(server, {
     origin: '*',
   },
 });
-
-
 const hbs = expressHandlebars.create({
   defaultLayout: 'main',
   extname: 'handlebars',
@@ -50,6 +49,7 @@ const hbs = expressHandlebars.create({
 app.engine('handlebars', hbs.engine);
 app.set('view engine', 'handlebars');
 app.set('views', './views');
+
 
 app.use(cors({ origin: APP_URL, credentials: true }));
 app.use(cookieParser());
@@ -60,12 +60,10 @@ app.use(
   express.urlencoded({ limit: '10mb', extended: true, parameterLimit: 50000 }),
 );
 app.use(morganMiddleware);
-
 app.use((req, res, next) => {
   req.io = io;
   return next();
 });
-
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/jar', jarRoutes);

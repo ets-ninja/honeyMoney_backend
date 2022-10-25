@@ -70,6 +70,8 @@ async function loginUser(req, res, next) {
     .cookie(REFRESH_COOKIE_NAME, refreshToken, {
       maxAge: 604800000,
       httpOnly: true,
+      sameSite: 'None',
+      secure: true,
     })
     .status(200)
     .json({
@@ -207,6 +209,8 @@ async function googleLogin(req, res, next) {
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
     maxAge: 604800000,
     httpOnly: true,
+    sameSite: 'None',
+    secure: true,
   });
   res.status(301).redirect(`${process.env.APP_URL}`);
 }
@@ -261,7 +265,11 @@ async function logoutUser(req, res, next) {
   }
 
   res
-    .clearCookie(REFRESH_COOKIE_NAME)
+    .clearCookie(REFRESH_COOKIE_NAME, {
+      httpOnly: true,
+      sameSite: 'None',
+      secure: true,
+    })
     .status(200)
     .json({ message: 'Logout succesful' });
 }
