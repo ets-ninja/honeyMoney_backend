@@ -52,4 +52,11 @@ router.post(
   paymentController.createConnectedAccount,
 );
 
+router.post('/share-bank-payment', paymentController.shareBankPayment);
+
+router.post(
+  '/share-bank-donate',
+  paymentController.sendMoneyToBasketWithShareBank,
+);
+
 module.exports = router;
