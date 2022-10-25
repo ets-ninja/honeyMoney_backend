@@ -11,6 +11,7 @@ const basketSchema = new Schema({
   expirationDate: { type: Number, required: false },
   isPublic: { type: Boolean, required: true },
   creationDate: { type: Number, required: true },
+  notificationDate: { type: Number, required: true },
   image: { type: String },
   stripeId: { type: String, required: true },
 });

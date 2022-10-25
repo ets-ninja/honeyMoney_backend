@@ -2,11 +2,13 @@ const { validationResult } = require('express-validator');
 
 const mongoose = require('mongoose');
 const ObjectId = mongoose.Types.ObjectId;
+const Handlebars = require('handlebars')
 
 const HttpError = require('../utils/http-error');
 
 const Jar = require('../models/jar.model');
 const Participants = require('../models/participant.model');
+const User = require('../models/user.model')
 
 const {
   createCustomer,
@@ -292,6 +294,7 @@ async function createBasket(req, res, next) {
       expirationDate: req.body.expirationDate,
       isPublic: req.body.isPublic,
       creationDate: +new Date(),
+      notificationDate: +new Date(),
       image: req.body.photoTag,
       stripeId,
     });
@@ -484,6 +487,45 @@ async function getJarFinanceById(req, res, next) {
   res.status(200).json({ basket: jar });
 }
 
+async function shareBasket(req, res, next) {
+  const basket = await Jar.findOne({ _id: req.params.id });
+  const owner = await User.findOne({ _id: basket.ownerId });
+
+  try {
+    if (basket.isPublic === false) {
+      return next(new HttpError('This basket is not public', 404));
+    }
+
+    Handlebars.registerHelper('setPublicKey', () => {
+      return process.env.STRIPE_PK_TEST;
+    });
+
+    Handlebars.registerHelper('setApiHost', () => {
+      return process.env.API_URL;
+    });
+
+    res.render('index', {
+      basketId: req.params.id,
+      basketName: basket.name,
+      description: basket.description,
+      accumulated: basket.value,
+      goal: basket.goal,
+      basketPhoto: basket.image,
+      userName: owner.firstName,
+      userPhoto: owner.userPhoto,
+      path: process.env.APP_URL,
+    });
+  } catch (error) {
+    return next(
+      new HttpError(
+        `Error when creating a basket appeared. Message: ${error.message}`,
+        500,
+      ),
+    );
+  }
+}
+
+
 module.exports = {
   getOwnerJars,
   getCoownerJars,
@@ -495,4 +537,5 @@ module.exports = {
   //deleteJar,
   getJarById,
   getJarFinanceById,
+  shareBasket,
 };

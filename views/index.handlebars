@@ -1,0 +1,37 @@
+<div class='modal'>
+  <div class='first_block'>
+    <h3 class="logo">HoneyMoney</h3>
+    <div class="banka">
+      <img src='/img/Group 15.svg' alt='' />
+    </div>
+    <div class='content'>
+      <div class='prev'>
+        {{#if userPhoto.length}}
+          <img src='{{userPhoto}}' alt='userPhoto' />
+        {{else}}
+          <img src='/img/image 4.svg' alt='userPhoto' />
+        {{/if}}
+        <p class="name"><strong>{{userName}}</strong> create jar</p>
+        <h2>{{basketName}}</h4>
+        <p class="description">{{description}}</p>
+      </div>
+      <div class='statistic'>
+        <span>
+          <h4>Accumulated</h4>
+          {{accumulated}}$
+        </span>
+        <div>
+        <hr>
+
+        </div>
+        <span>
+          <h4>Goal</h4>
+          {{goal}}$
+        </span>
+      </div>
+    </div>
+  </div>
+  <div class='second_block'>
+    {{> paymentForm}}
+  </div>
+</div>
