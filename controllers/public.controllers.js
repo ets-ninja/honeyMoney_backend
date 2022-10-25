@@ -18,7 +18,6 @@ const getPaginationSettings = (req, jarsCount) => {
   return { jarsPerPage, pageCount, skip };
 };
 
-// SHOULD BE DOUBLE CHECKED IF SORTING WORKS WELL
 const getSortSettings = order => {
   switch (order) {
     case 'date asc':
