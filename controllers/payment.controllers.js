@@ -50,7 +50,7 @@ async function getCustomerBalance(req, res, next) {
 
 // get customer cards info
 async function getCustomerCards(req, res, next) {
-  const { stripeUserId, connectedAccount } = req.user;
+  const { stripeUserId } = req.user;
   let cards = [];
   try {
     const paymentMethods = await stripe.customers.listPaymentMethods(
@@ -76,10 +76,10 @@ async function getCustomerCards(req, res, next) {
     );
     return next(error);
   }
-  if (connectedAccount) {
-    const card = await getConnectedCard({ accountId: connectedAccount });
-    cards.push(card);
-  }
+//   if (connectedAccount) {
+//     const card = await getConnectedCard({ accountId: connectedAccount });
+//     cards.push(card);
+//   }
   return res.status(200).json(cards);
 }
 
