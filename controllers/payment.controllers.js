@@ -30,6 +30,7 @@ const Transaction = require('../models/transaction.model');
 const Jar = require('../models/jar.model');
 const User = require('../models/user.model');
 const sendMessage = require('../services/notifications');
+const shareBankTransaction = require('../models/shareBankTransaction.model');
 
 // get customer balance
 async function getCustomerBalance(req, res, next) {
@@ -487,6 +488,90 @@ async function createConnectedAccount(req, res, next) {
   res.status(200).json(accountLink.url);
 }
 
+async function shareBankPayment(req, res) {
+  const items = req.body;
+
+  console.log('items', items);
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: items.amount,
+    currency: 'usd',
+    payment_method_types: ['card'],
+    description: items.description,
+  });
+  res.send({
+    clientSecret: paymentIntent.client_secret,
+    paymentIntentId: paymentIntent.id,
+  });
+}
+
+async function sendMoneyToBasketWithShareBank(req, res, next) {
+  const { paymentIntentId, basketId, paymentIntent } = req.body;
+
+  let basket;
+  try {
+    basket = await Basket.findOne({ _id: basketId });
+  } catch (err) {
+    createRefund({ paymentIntentId });
+    res.redirect('/basket/error');
+    const error = new HttpError(
+      'Could find basket. Please try again later',
+      500,
+    );
+    return next(error);
+  }
+
+  // send money to basket
+  try {
+    await changeBalance({
+      stripeUserId: basket.stripeId,
+      amount: `-${paymentIntent.amount}`,
+      description: paymentIntent.description,
+    });
+  } catch (err) {
+    createRefund({ paymentIntentId });
+    res.redirect('/basket/error');
+    const error = new HttpError(
+      'Could not create transactions. Please try again later',
+      500,
+    );
+    return next(error);
+  }
+
+  // change basket value
+  let value = paymentIntent.amount / 100;
+  try {
+    basket.value += value;
+    await basket.save();
+  } catch (err) {
+    createRefund({ paymentIntentId });
+    const error = new HttpError(
+      'Could not create transactions. Please try again later',
+      500,
+    );
+    return next(error);
+  }
+  // console.log(paymentIntent)
+  try {
+    const newTransaction = await shareBankTransaction({
+      basketId,
+      stripeId: paymentIntent.id,
+      amount: paymentIntent.amount,
+      comment: paymentIntent.description || ' ',
+    });
+    await newTransaction.save();
+  } catch (err) {
+    console.log(err);
+    createRefund({ paymentIntentId });
+    const error = new HttpError(
+      'Could not create transactions. Please try again later',
+      500,
+    );
+    return next(error);
+  }
+
+  res.status(201).json({ status: 'success' });
+}
+
 module.exports = {
   getCustomerBalance,
   getCustomerCards,
@@ -496,4 +581,6 @@ module.exports = {
   receiveMoney,
   createConnectedAccount,
   sendMoneyToBasket,
+  shareBankPayment,
+  sendMoneyToBasketWithShareBank,
 };
