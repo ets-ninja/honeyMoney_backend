@@ -17,9 +17,9 @@ const onePageLimit = 12;
 const getOrderArgs = order => {
   switch (order) {
     case 'creation asc':
-      return { creationDate: 1, _id: 1 };
-    case 'creation desc':
       return { creationDate: -1, _id: 1 };
+    case 'creation desc':
+      return { creationDate: 1, _id: 1 };
     case 'goal desc':
       return { goal: -1, _id: 1 };
     case 'goal asc':
