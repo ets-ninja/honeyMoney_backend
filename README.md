@@ -69,4 +69,3 @@ const logger = require("./services/logger");
                                       recipientJarId: jarId, })
   logger.debug('message')
 ```
-
